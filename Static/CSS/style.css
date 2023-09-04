@@ -1,0 +1,41 @@
+body, ul, li {
+    margin: 0;
+    padding: 0;
+}
+
+/* Estilos para a barra de navegação (navbar) */
+.navbar {
+    background-color: #000000; /* Cor de fundo sólida */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos para o logotipo */
+.logo img {
+    height: 40px; /* Altura do logotipo */
+    width: auto; /* Largura automática para manter a proporção */
+}
+
+/* Estilos para o menu */
+.menu ul {
+    list-style: none;
+    display: flex;
+}
+
+.menu li {
+    margin-right: 20px;
+}
+
+.menu a {
+    text-decoration: none;
+    color: #ff0000; /* Cor do texto do menu */
+    font-weight: bold;
+    transition: color 0.3s;
+}
+
+.menu a:hover {
+    color: #ffffff; /* Cor do texto do menu ao passar o mouse */
+}
