@@ -1,7 +1,7 @@
 # sojogabr
 > Campeonatos e eventos
 
-![](img/So%20Joga.png 'Só Joga')
+![](frontend/img/So%20Joga.png 'Só Joga')
 
 # Site de campeonatos e eventos.
 
