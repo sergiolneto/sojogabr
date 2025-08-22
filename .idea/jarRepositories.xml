@@ -2,6 +2,16 @@
 <project version="4">
   <component name="RemoteRepositoriesConfiguration">
     <remote-repository>
+      <option name="id" value="mvn-repo" />
+      <option name="name" value="MVN Repository" />
+      <option name="url" value="https://mvnrepository.com/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="central" />
+      <option name="name" value="Central" />
+      <option name="url" value="https://packages.atlassian.com/mvn/maven-atlassian-external/central" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="central" />
       <option name="name" value="Central Repository" />
       <option name="url" value="https://repo.maven.apache.org/maven2" />
@@ -12,9 +22,49 @@
       <option name="url" value="https://repo1.maven.org/maven2" />
     </remote-repository>
     <remote-repository>
+      <option name="id" value="maven-central" />
+      <option name="name" value="maven-central" />
+      <option name="url" value="https://repo1.maven.org/maven2/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="mvn-repo" />
+      <option name="name" value="MVN Repository" />
+      <option name="url" value="https://mvnrepository.com/artifact/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="central" />
+      <option name="name" value="Central" />
+      <option name="url" value="https://packages.atlassian.com/mvn/maven-atlassian-external/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="mvn-repo" />
+      <option name="name" value="MVN Repository" />
+      <option name="url" value="https://mvnrepository.com/repos" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="central" />
+      <option name="name" value="Central" />
+      <option name="url" value="https://maven.artifacts.atlassian.com/" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="jboss.community" />
       <option name="name" value="JBoss Community repository" />
       <option name="url" value="https://repository.jboss.org/nexus/content/repositories/public/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="mvn-repo" />
+      <option name="name" value="MVN Repository" />
+      <option name="url" value="https://mvnrepository.com/artifact/org.socialsignin/spring-data-dynamodb" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="mvn-repo" />
+      <option name="name" value="MVN Repository" />
+      <option name="url" value="https://maven.icm.edu.pl/artifactory/repo/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="mvn-repo" />
+      <option name="name" value="MVN Repository" />
+      <option name="url" value="https://mvnrepository.com/artifact" />
     </remote-repository>
   </component>
 </project>

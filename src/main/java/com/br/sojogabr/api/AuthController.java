@@ -1,21 +1,29 @@
 package com.br.sojogabr.api;
 
-import com.br.sojogabr.domain.model.LoginRequest;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import com.br.sojogabr.api.dto.LoginRequest;
+import com.br.sojogabr.domain.model.User;
+import com.br.sojogabr.domain.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-class AuthController {
+public class AuthController {
+
+    @Autowired
+    private UserRepository userRepository;
 
     @PostMapping("/login")
-    public String login(@RequestBody LoginRequest loginRequest) {
-        // Aqui você implementaria a lógica de autenticação
-        // Por exemplo, verificar no banco de dados se o usuário e senha são válidos
-        if ("usuario".equals(loginRequest.getUsername()) && "senha123".equals(loginRequest.getPassword())) {
-            return "Login bem-sucedido!";
+    public Object login(@RequestBody LoginRequest loginRequest) {
+        User user = userRepository.findById("1").orElse(null);
+        if (user != null && "senha123".equals(loginRequest.getPassword())) {
+            return user;
         } else {
             return "Usuário ou senha inválidos.";
         }
+    }
+
+    @PostMapping("/users")
+    public User saveUser(@RequestBody User user) {
+        return userRepository.save(user);
     }
 }
