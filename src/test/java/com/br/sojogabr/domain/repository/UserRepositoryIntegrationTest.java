@@ -116,7 +116,7 @@ class UserRepositoryIntegrationTest {
 	}
 
 	/**
-	 * Método auxiliar para reduzir a duplicação de código na criação de usuários para testes.
+	 * Métodos auxiliar para reduzir a duplicação de código na criação de usuários para testes.
 	 */
 	private User createTestUser(String id, String name, List<String> sports) {
 		User user = new User();
