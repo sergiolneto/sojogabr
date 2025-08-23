@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Só Joga</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="icon" type="image/png" href="../img/So Joga.png">
+</head>
+<body>
+    <header class="navbar">
+        <div class="logo">
+            <img src="img/So Joga.png" alt="Só Joga">
+        </div>
+        <nav class="menu">
+            <ul>
+                <li><a href="#">Página Inicial</a></li>
+                <li><a href="#">Sobre Nós</a></li>
+                <li><a href="#">Serviços</a></li>
+                <li><a href="#">Portfólio</a></li>
+                <li><a href="#">Contato</a></li>
+            </ul>
+        </nav>
+        <div id="stats">
+            <!-- Conteúdo das estatísticas de jogo -->
+        </div>
+        <div id="table">
+            <!-- Tabela de pontos -->
+        </div>
+    </header>
+
+    <main>
+        <section id="cadastro">
+            <h2>Cadastro de Usuário</h2>
+            <form id="registerForm">
+                <label for="username">Usuário:</label>
+                <input type="text" id="username" name="username" required>
+                <label for="email">E-mail:</label>
+                <input type="email" id="email" name="email" required>
+                <label for="password">Senha:</label>
+                <input type="password" id="password" name="password" required>
+                <button type="submit">Cadastrar</button>
+            </form>
+            <div id="registerMessage"></div>
+        </section>
+    </main>
+
+    <script>
+    document.getElementById('registerForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const username = document.getElementById('username').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        const response = await fetch('/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, email, password })
+        });
+
+        const result = await response.json();
+        const messageDiv = document.getElementById('registerMessage');
+        if (response.ok) {
+            messageDiv.textContent = 'Usuário cadastrado com sucesso!';
+            messageDiv.style.color = 'green';
+        } else {
+            messageDiv.textContent = result.error || 'Erro ao cadastrar usuário.';
+            messageDiv.style.color = 'red';
+        }
+    });
+    </script>
+</body>
+</html>
