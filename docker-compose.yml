@@ -1,10 +1,13 @@
 services:
   localstack:
-    image: localstack/localstack:latest
+    image: localstack/localstack:3.5.0 # Boa prática: fixar a versão para evitar quebras inesperadas.
     ports:
       - "4566:4566"
     environment:
       - SERVICES=dynamodb
       - DEBUG=1
     volumes:
-      - ./localstack:/var/lib/localstack
+      # Mapeia o diretório de inicialização para o local correto dentro do container.
+      - ./local/init:/etc/localstack/init/ready.d
+      # Opcional: mantém os dados do LocalStack entre as execuções.
+      - ./localstack_data:/var/lib/localstack
