@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Só Joga</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="icon" type="image/png" href="../img/So Joga.png">
+    <link rel="stylesheet" href="css/style.css"> <!-- Caminho corrigido para CSS estático -->
+    <link rel="icon" type="image/png" href="img/So Joga.png"> <!-- Caminho corrigido para o ícone -->
 </head>
 <body>
     <header class="navbar">
@@ -48,24 +48,31 @@
     document.getElementById('registerForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const username = document.getElementById('username').value;
-        const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
 
-        const response = await fetch('/register', {
+        // O backend espera um objeto User. Mapeamos os campos do formulário.
+        const userData = {
+            username: username,
+            nome: username, // O modelo User também tem um campo 'nome'
+            password: password
+        };
+
+        const response = await fetch('/api/users', { // Endpoint corrigido para o backend Spring
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username, email, password })
+            body: JSON.stringify(userData)
         });
 
-        const result = await response.json();
         const messageDiv = document.getElementById('registerMessage');
         if (response.ok) {
-            messageDiv.textContent = 'Usuário cadastrado com sucesso!';
+            const result = await response.json();
+            messageDiv.textContent = `Usuário ${result.username} cadastrado com sucesso!`;
             messageDiv.style.color = 'green';
         } else {
-            messageDiv.textContent = result.error || 'Erro ao cadastrar usuário.';
+            const result = await response.json().catch(() => ({ message: 'Erro ao cadastrar usuário.' }));
+            messageDiv.textContent = result.message || 'Erro ao cadastrar usuário.';
             messageDiv.style.color = 'red';
         }
     });

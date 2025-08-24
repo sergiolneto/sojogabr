@@ -3,11 +3,37 @@ services:
     image: localstack/localstack:3.5.0 # Boa prática: fixar a versão para evitar quebras inesperadas.
     ports:
       - "4566:4566"
+      - "4510-4559:4510-4559" # Necessário para versões mais recentes do LocalStack
     environment:
       - SERVICES=dynamodb
       - DEBUG=1
     volumes:
       # Mapeia o diretório de inicialização para o local correto dentro do container.
-      - ./local/init:/etc/localstack/init/ready.d
+      # O script criarDynamo.sh deve estar neste diretório para ser executado.
+      - ./local:/etc/localstack/init/ready.d
       # Opcional: mantém os dados do LocalStack entre as execuções.
       - ./localstack_data:/var/lib/localstack
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      # Sobrescreve as propriedades para conectar ao LocalStack dentro da rede do Docker
+      - SPRING_CLOUD_AWS_DYNAMODB_ENDPOINT=http://localstack:4566
+      - SPRING_CLOUD_AWS_REGION_STATIC=sa-east-1
+      - SPRING_CLOUD_AWS_CREDENTIALS_ACCESS-KEY=test
+      - SPRING_CLOUD_AWS_CREDENTIALS_SECRET-KEY=test
+    depends_on:
+      - localstack
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8081:80" # Acesse o frontend em http://localhost:8081
+    depends_on:
+      - backend
