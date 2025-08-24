@@ -3,6 +3,7 @@ package com.br.sojogabr.domain.repository;
 import com.br.sojogabr.domain.model.User;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -64,11 +65,11 @@ class UserRepositoryIntegrationTest {
      */
     @BeforeEach
     void cleanUpTable() {
-        // A operação scan() lê todos os itens, e então deletamos um por um.
-        userRepository.findAll().forEach(user -> userRepository.deleteById(user.getId()));
+        userRepository.deleteAll();
     }
 
     @Test
+    @DisplayName("Deve salvar um usuário e encontrá-lo pelo ID")
     void shouldSaveUserAndFindById() {
         // Arrange: Cria um novo usuário
 		User newUser = createTestUser(UUID.randomUUID().toString(), "Test User", List.of("Futebol", "Vôlei"));
@@ -86,6 +87,7 @@ class UserRepositoryIntegrationTest {
     }
 
     @Test
+    @DisplayName("Deve encontrar todos os usuários salvos")
     void shouldFindAllUsers() {
         // Arrange: Cria e salva dois usuários
 		userRepository.save(createTestUser(UUID.randomUUID().toString(), "User One", null));
@@ -100,6 +102,7 @@ class UserRepositoryIntegrationTest {
     }
 
     @Test
+    @DisplayName("Deve deletar um usuário pelo ID")
     void shouldDeleteUser() {
         // Arrange: Cria e salva um usuário
 		User userToDelete = createTestUser(UUID.randomUUID().toString(), "User to Delete", null);
@@ -116,7 +119,7 @@ class UserRepositoryIntegrationTest {
 	}
 
 	/**
-	 * Métodos auxiliar para reduzir a duplicação de código na criação de usuários para testes.
+	 * Um auxiliar para reduzir a duplicação de código na criação de usuários para testes.
 	 */
 	private User createTestUser(String id, String name, List<String> sports) {
 		User user = new User();

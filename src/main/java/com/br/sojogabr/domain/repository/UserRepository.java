@@ -6,8 +6,6 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteItemEnhancedRequest;
-import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.WriteBatch;
 
 import java.util.List;
@@ -49,13 +47,25 @@ public class UserRepository {
         userTable.deleteItem(key);
     }
 
-public void deleteAll() {
-    WriteBatch.Builder<User> writeBatchBuilder = WriteBatch.builder(User.class).mappedTableResource(userTable);
-    findAll().forEach(user -> {
-        Key key = Key.builder().partitionValue(user.getId()).build();
-        writeBatchBuilder.addDeleteItem(DeleteItemEnhancedRequest.builder().key(key).build());
-    });
+    public void deleteAll() {
+        List<User> usersToDelete = findAll();
+        if (usersToDelete.isEmpty()) {
+            return;
+        }
+        final int BATCH_SIZE = 25;
+        for (int i = 0; i < usersToDelete.size(); i += BATCH_SIZE) {
+            List<User> batch = usersToDelete.subList(i, Math.min(i + BATCH_SIZE, usersToDelete.size()));
 
-    enhancedClient.batchWriteItem(BatchWriteItemEnhancedRequest.builder().writeBatches(writeBatchBuilder.build()).build());
-}
+            WriteBatch.Builder<User> writeBatchBuilder = WriteBatch.builder(User.class)
+                    .mappedTableResource(this.userTable);
+
+            batch.forEach(user -> {
+                Key key = Key.builder().partitionValue(user.getId()).build();
+                writeBatchBuilder.addDeleteItem(r -> r.key(key));
+            });
+
+            // Execute the batch write operation for the current chunk.
+            enhancedClient.batchWriteItem(r -> r.addWriteBatch(writeBatchBuilder.build()));
+        }
+    }
 }
