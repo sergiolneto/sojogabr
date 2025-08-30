@@ -2,9 +2,10 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Só Joga</title>
-    <link rel="stylesheet" href="css/style.css"> <!-- Caminho corrigido para CSS estático -->
-    <link rel="icon" type="image/png" href="img/So Joga.png"> <!-- Caminho corrigido para o ícone -->
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="icon" type="image/png" href="img/So Joga.png">
 </head>
 <body>
     <header class="navbar">
@@ -13,67 +14,84 @@
         </div>
         <nav class="menu">
             <ul>
-                <li><a href="#">Página Inicial</a></li>
+                <li><a href="index.html">Página Inicial</a></li>
                 <li><a href="#">Sobre Nós</a></li>
                 <li><a href="#">Serviços</a></li>
-                <li><a href="#">Portfólio</a></li>
                 <li><a href="#">Contato</a></li>
+                <li><a href="cadastro.html">Cadastre-se</a></li>
+                <li><a href="#" id="login-btn">Login</a></li>
             </ul>
         </nav>
-        <div id="stats">
-            <!-- Conteúdo das estatísticas de jogo -->
-        </div>
-        <div id="table">
-            <!-- Tabela de pontos -->
-        </div>
     </header>
 
+    <!-- Caixa de Login Flutuante -->
+    <div id="login-popup">
+        <form id="loginForm">
+            <h2>Login</h2>
+            <div class="form-group">
+                <label for="popup-username">Usuário:</label>
+                <input type="text" id="popup-username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="popup-password">Senha:</label>
+                <input type="password" id="popup-password" name="password" required>
+            </div>
+            <button type="submit">Entrar</button>
+            <div id="message"></div>
+        </form>
+    </div>
+
     <main>
-        <section id="cadastro">
-            <h2>Cadastro de Usuário</h2>
-            <form id="registerForm">
-                <label for="username">Usuário:</label>
-                <input type="text" id="username" name="username" required>
-                <label for="email">E-mail:</label>
-                <input type="email" id="email" name="email" required>
-                <label for="password">Senha:</label>
-                <input type="password" id="password" name="password" required>
-                <button type="submit">Cadastrar</button>
-            </form>
-            <div id="registerMessage"></div>
+        <section>
+            <h1>Bem-vindo ao Só Joga!</h1>
+            <p>Sua plataforma para encontrar e organizar eventos esportivos.</p>
         </section>
     </main>
 
     <script>
-    document.getElementById('registerForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
+    // --- Lógica para controlar a caixa de login flutuante ---
+    const loginBtn = document.getElementById('login-btn');
+    const loginPopup = document.getElementById('login-popup');
 
-        // O backend espera um objeto User. Mapeamos os campos do formulário.
-        const userData = {
-            username: username,
-            nome: username, // O modelo User também tem um campo 'nome'
-            password: password
+    loginBtn.addEventListener('click', function(event) {
+        event.preventDefault();
+        loginPopup.classList.toggle('show');
+    });
+
+    // Fecha o popup se o usuário clicar fora dele
+    window.addEventListener('click', function(event) {
+        if (!loginPopup.contains(event.target) && !loginBtn.contains(event.target)) {
+            loginPopup.classList.remove('show');
+        }
+    });
+
+    // --- Lógica para o formulário de login ---
+    document.getElementById('loginForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        const messageDiv = document.getElementById('message');
+        const loginData = {
+            username: document.getElementById('popup-username').value,
+            password: document.getElementById('popup-password').value
         };
 
-        const response = await fetch('/api/users', { // Endpoint corrigido para o backend Spring
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(userData)
-        });
+        const backendUrl = 'http://localhost:8787/api/login';
 
-        const messageDiv = document.getElementById('registerMessage');
-        if (response.ok) {
-            const result = await response.json();
-            messageDiv.textContent = `Usuário ${result.username} cadastrado com sucesso!`;
-            messageDiv.style.color = 'green';
-        } else {
-            const result = await response.json().catch(() => ({ message: 'Erro ao cadastrar usuário.' }));
-            messageDiv.textContent = result.message || 'Erro ao cadastrar usuário.';
-            messageDiv.style.color = 'red';
+        try {
+            const response = await fetch(backendUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(loginData) });
+            if (response.ok) {
+                const result = await response.json();
+                messageDiv.className = 'success';
+                messageDiv.textContent = `Login bem-sucedido! Bem-vindo, ${result.username}.`;
+                setTimeout(() => loginPopup.classList.remove('show'), 1500); // Fecha o popup após o sucesso
+            } else {
+                messageDiv.className = 'error';
+                messageDiv.textContent = 'Usuário ou senha inválidos.';
+            }
+        } catch (error) {
+            messageDiv.className = 'error';
+            messageDiv.textContent = 'Erro de conexão com o servidor. Verifique se o backend está rodando.';
+            console.error('Erro:', error);
         }
     });
     </script>

@@ -10,7 +10,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**") // Aplica a configuração para todos os endpoints da API
-                .allowedOrigins("http://localhost:3000") // URL do seu frontend (ajuste se necessário)
+                .allowedOrigins("http://localhost:8080") // URL do frontend definida no docker-compose
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
