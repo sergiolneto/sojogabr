@@ -16,6 +16,13 @@
     <properties>
         <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Centraliza a versão da biblioteca JWT -->
+        <lombok.version>1.18.32</lombok.version>
+        <jjwt.version>0.12.5</jjwt.version>
+        <tomcat.version>10.1.26</tomcat.version>
+        <json-smart.version>2.5.2</json-smart.version>
+        <xmlunit.version>2.10.0</xmlunit.version>
+        <commons-compress.version>1.27.0</commons-compress.version>
     </properties>
     <dependencies>
         <dependency>
@@ -33,7 +40,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.32</version>
+            <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -41,20 +48,25 @@
             <artifactId>spring-cloud-aws-starter-dynamodb</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <!-- Dependências para JWT -->
+        <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
-            <version>0.12.5</version>
+            <version>${jjwt.version}</version>
         </dependency>
         <dependency>
-                <groupId>io.jsonwebtoken</groupId>
+            <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
-            <version>0.12.5</version>
+            <version>${jjwt.version}</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
-            <version>0.12.5</version>
+            <version>${jjwt.version}</version>
             <scope>runtime</scope>
         </dependency>
 
@@ -92,10 +104,48 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <!-- Adiciona o repositório Maven Central explicitamente -->
+    <!-- Isso força o Maven a buscar as dependências do local correto e público -->
     <repositories>
         <repository>
-            <id>maven-central</id>
-            <url>https://repo1.maven.org/maven2/</url>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
         </repository>
     </repositories>
+
+    <!-- Garante que os plugins do Maven também sejam baixados do repositório público -->
+    <pluginRepositories>
+        <pluginRepository>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <finalName>app</finalName> <!-- Define um nome de arquivo fixo para o JAR -->
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

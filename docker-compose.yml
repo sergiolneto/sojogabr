@@ -1,39 +1,59 @@
 services:
   localstack:
-    image: localstack/localstack:3.5.0 # Boa prática: fixar a versão para evitar quebras inesperadas.
+    image: localstack/localstack:${LOCALSTACK_VERSION:-3.5.0}
     ports:
       - "4566:4566"
       - "4510-4559:4510-4559" # Necessário para versões mais recentes do LocalStack
     environment:
       - SERVICES=dynamodb
-      - DEBUG=1
+      # - DEBUG=1 # Habilite apenas se precisar depurar o LocalStack
     volumes:
       # Mapeia o diretório de inicialização para o local correto dentro do container.
       # O script criarDynamo.sh deve estar neste diretório para ser executado.
       - ./local:/etc/localstack/init/ready.d
       # Opcional: mantém os dados do LocalStack entre as execuções.
       - ./localstack_data:/var/lib/localstack
+    networks:
+      - sojoga-net
 
   backend:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "${BACKEND_PORT:-8787}:${BACKEND_PORT:-8787}"
     environment:
       # Sobrescreve as propriedades para conectar ao LocalStack dentro da rede do Docker
       - SPRING_CLOUD_AWS_DYNAMODB_ENDPOINT=http://localstack:4566
-      - SPRING_CLOUD_AWS_REGION_STATIC=sa-east-1
-      - SPRING_CLOUD_AWS_CREDENTIALS_ACCESS-KEY=test
-      - SPRING_CLOUD_AWS_CREDENTIALS_SECRET-KEY=test
+      - SPRING_CLOUD_AWS_REGION_STATIC=${AWS_REGION}
+      - SPRING_CLOUD_AWS_CREDENTIALS_ACCESS-KEY=${AWS_ACCESS_KEY_ID}
+      - SPRING_CLOUD_AWS_CREDENTIALS_SECRET-KEY=${AWS_SECRET_ACCESS_KEY}
     depends_on:
-      - localstack
+      localstack:
+        condition: service_started
+    networks:
+      - sojoga-net
+    healthcheck:
+      # Testa se a aplicação está respondendo no endpoint de saúde do Actuator
+      test: ["CMD", "curl", "-f", "http://localhost:${BACKEND_PORT:-8787}/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s # Dá 30 segundos para a aplicação iniciar antes de começar os checks
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "8081:80" # Acesse o frontend em http://localhost:8081
+      - "${FRONTEND_PORT:-8080}:80" # Acesse o frontend em http://localhost:8080
     depends_on:
-      - backend
+      backend:
+        # O frontend só iniciará quando o backend estiver saudável
+        condition: service_healthy
+    networks:
+      - sojoga-net
+
+networks:
+  sojoga-net:
+    driver: bridge
