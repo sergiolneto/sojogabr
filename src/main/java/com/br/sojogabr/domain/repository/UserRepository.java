@@ -1,6 +1,9 @@
 package com.br.sojogabr.domain.repository;
 
 import com.br.sojogabr.domain.model.User;
+import com.br.sojogabr.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
@@ -16,6 +19,7 @@ public class UserRepository {
     private final DynamoDbTable<User> userTable;
     private final DynamoDbEnhancedClient enhancedClient;
     private final DynamoDbIndex<User> usernameIndex;
+    private static final Logger logger = LoggerFactory.getLogger(UserRepository.class);
 
     /**
      * O Spring injeta o DynamoDbEnhancedClient automaticamente.
@@ -28,6 +32,7 @@ public class UserRepository {
     }
 
     public User save(User user) {
+        logger.info("Executando operação PutItem no DynamoDB para o usuário: '{}'", user.getUsername());
         userTable.putItem(user);
         return user;
     }

@@ -15,6 +15,13 @@ services:
       - ./localstack_data:/var/lib/localstack
     networks:
       - sojoga-net
+    healthcheck:
+      # Este healthcheck verifica o endpoint de saúde do LocalStack, que só responde com sucesso
+      # após os scripts de inicialização (como a criação da tabela) serem concluídos.
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
 
   backend:
     build:
@@ -32,7 +39,8 @@ services:
       - SERVER_PORT=${BACKEND_PORT:-8787}
     depends_on:
       localstack:
-        condition: service_started
+        # Agora o backend espera o LocalStack estar completamente pronto (incluindo a tabela).
+        condition: service_healthy
     networks:
       - sojoga-net
     healthcheck:
@@ -50,8 +58,7 @@ services:
     ports:
       - "${FRONTEND_PORT:-8080}:80" # Acesse o frontend em http://localhost:8080
     depends_on:
-      backend:
-        # O frontend só iniciará quando o backend estiver saudável
+      localstack:
         condition: service_healthy
     networks:
       - sojoga-net

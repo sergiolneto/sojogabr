@@ -1,69 +1,58 @@
 package com.br.sojogabr.api;
 
+import com.br.sojogabr.api.dto.UserResponse;
 import com.br.sojogabr.api.dto.LoginRequest;
+import com.br.sojogabr.api.dto.UserLoginResponse;
 import com.br.sojogabr.domain.model.User;
 import com.br.sojogabr.domain.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.util.UriComponentsBuilder;
-
-import java.net.URI;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api")
 public class AuthController {
 
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+    
+    // Dependências para o fluxo de autenticação padrão do Spring Security
+    private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
-    // Removido para simplificar, já que não estamos implementando a lógica de token JWT aqui.
-    // private final JwtService jwtService;
-    private final PasswordEncoder passwordEncoder;
 
     // 1. Injeção de dependência via construtor (prática recomendada)
-    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AuthController(AuthenticationManager authenticationManager, UserRepository userRepository) {
+        this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
-        // NOTA: Este método assume que existe um `findByUsername` em seu UserRepository.
-        // Isso provavelmente exigirá um Índice Secundário Global (GSI) no campo 'username' da sua tabela DynamoDB.
-        return userRepository.findByUsername(loginRequest.getUsername())
-                .filter(user -> passwordEncoder.matches(loginRequest.getPassword(), user.getPassword()))
-                .map(user -> {
-                    // Em uma implementação real, aqui você geraria um token JWT.
-                    // Por simplicidade, retornamos uma confirmação com o nome de usuário.
-                    return ResponseEntity.ok(Map.of("username", user.getUsername()));
-                })
-                .orElse(ResponseEntity.status(401).body(Map.of("message", "Usuário ou senha inválidos")));
-    }
+    public ResponseEntity<UserLoginResponse> login(@RequestBody LoginRequest loginRequest) {
+        logger.info("Tentativa de login recebida para o usuário: '{}'", loginRequest.getUsername());
 
-    @PostMapping("/users")
-    public ResponseEntity<User> saveUser(@RequestBody User user, UriComponentsBuilder uriBuilder) {
-        if (user.getId() == null || user.getId().isEmpty()) {
-            user.setId(UUID.randomUUID().toString());
-        }
-        // 4. Criptografa a senha antes de salvar o novo usuário
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        // Delega a autenticação para o Spring Security.
+        // Se as credenciais estiverem erradas, ele lançará uma exceção
+        // que será capturada pelo GlobalExceptionHandler.
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
+        );
 
-        User savedUser = userRepository.save(user);
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        UserLoginResponse response = new UserLoginResponse(userDetails.getUsername());
 
-        URI location = uriBuilder.path("/api/users/{id}").buildAndExpand(savedUser.getId()).toUri();
+        logger.info("Usuário '{}' autenticado com sucesso.", response.getUsername());
 
-        // 5. NUNCA retorne a senha (mesmo que criptografada) na resposta da API
-        savedUser.setPassword(null);
-
-        return ResponseEntity.created(location).body(savedUser);
-
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/users/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable String id){
+    public ResponseEntity<UserResponse> getUserById(@PathVariable String id){
         return userRepository.findById(id)
+                .map(UserResponse::fromEntity)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
 

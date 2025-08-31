@@ -1,20 +1,32 @@
 #!/bin/bash
+echo "----------- Criando tabela DynamoDB: Usuario -----------"
 
-ENDPOINT="http://localhost:4566"
-TABLE_NAME="Usuario"
-REGION="sa-east-1"
+aws dynamodb create-table \
+    --table-name Usuario \
+    --attribute-definitions \
+        AttributeName=id,AttributeType=S \
+        AttributeName=username,AttributeType=S \
+    --key-schema \
+        AttributeName=id,KeyType=HASH \
+    --provisioned-throughput \
+        ReadCapacityUnits=5,WriteCapacityUnits=5 \
+    --global-secondary-indexes \
+        "[
+            {
+                \"IndexName\": \"username-index\",
+                \"KeySchema\": [
+                    {\"AttributeName\":\"username\",\"KeyType\":\"HASH\"}
+                ],
+                \"Projection\": {
+                    \"ProjectionType\":\"ALL\"
+                },
+                \"ProvisionedThroughput\": {
+                    \"ReadCapacityUnits\": 5,
+                    \"WriteCapacityUnits\": 5
+                }
+            }
+        ]" \
+    --endpoint-url http://localhost:4566 \
+    --region sa-east-1
 
-# Verifica se a tabela já existe
-EXISTS=$(aws --endpoint-url=$ENDPOINT --region=$REGION dynamodb list-tables | grep -w "\"$TABLE_NAME\"")
-
-if [ -z "$EXISTS" ]; then
-  echo "Criando tabela $TABLE_NAME..."
-  aws --endpoint-url=$ENDPOINT --region=$REGION dynamodb create-table \
-    --table-name $TABLE_NAME \
-    --attribute-definitions AttributeName=id,AttributeType=S \
-    --key-schema AttributeName=id,KeyType=HASH \
-    --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
-  echo "Tabela criada."
-else
-  echo "Tabela $TABLE_NAME já existe."
-fi
+echo "----------- Tabela criada com sucesso. -----------"

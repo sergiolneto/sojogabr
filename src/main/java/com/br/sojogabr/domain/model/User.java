@@ -7,8 +7,6 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecon
 
 import java.util.ArrayList;
 import java.util.List;
-@Getter
-@Setter
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,9 +15,10 @@ public class User {
 
     private String id;
     private String nome;
+    private String email;
     private String endereco;
     private String celular;
-    private String instagram;
+    private String insta;
     private List<String> esportes = new ArrayList<>();
     private String posicao;
     private boolean capitao;
