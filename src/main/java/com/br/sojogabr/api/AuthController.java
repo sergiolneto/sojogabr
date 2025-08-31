@@ -32,19 +32,14 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         // NOTA: Este método assume que existe um `findByUsername` em seu UserRepository.
         // Isso provavelmente exigirá um Índice Secundário Global (GSI) no campo 'username' da sua tabela DynamoDB.
-        Optional<User> userOptional = userRepository.findByUsername(loginRequest.getUsername());
-    
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            // 2. Compara a senha fornecida com a senha criptografada armazenada
-            if (passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-                // Em uma implementação real, aqui você geraria um token JWT.
-                // Por simplicidade, retornamos uma confirmação com o nome de usuário.
-                return ResponseEntity.ok(Map.of("username", user.getUsername()));
-            }
-        }
-        // 3. Mensagem de erro genérica por segurança
-        return ResponseEntity.status(401).body(Map.of("message", "Usuário ou senha inválidos"));
+        return userRepository.findByUsername(loginRequest.getUsername())
+                .filter(user -> passwordEncoder.matches(loginRequest.getPassword(), user.getPassword()))
+                .map(user -> {
+                    // Em uma implementação real, aqui você geraria um token JWT.
+                    // Por simplicidade, retornamos uma confirmação com o nome de usuário.
+                    return ResponseEntity.ok(Map.of("username", user.getUsername()));
+                })
+                .orElse(ResponseEntity.status(401).body(Map.of("message", "Usuário ou senha inválidos")));
     }
 
     @PostMapping("/users")

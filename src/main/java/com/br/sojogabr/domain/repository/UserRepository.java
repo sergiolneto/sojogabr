@@ -2,10 +2,8 @@ package com.br.sojogabr.domain.repository;
 
 import com.br.sojogabr.domain.model.User;
 import org.springframework.stereotype.Repository;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
-import software.amazon.awssdk.enhanced.dynamodb.Key;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.*;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.enhanced.dynamodb.model.WriteBatch;
 
 import java.util.List;
@@ -17,6 +15,7 @@ public class UserRepository {
 
     private final DynamoDbTable<User> userTable;
     private final DynamoDbEnhancedClient enhancedClient;
+    private final DynamoDbIndex<User> usernameIndex;
 
     /**
      * O Spring injeta o DynamoDbEnhancedClient automaticamente.
@@ -25,6 +24,7 @@ public class UserRepository {
     public UserRepository(DynamoDbEnhancedClient enhancedClient) {
         this.enhancedClient = enhancedClient;
         this.userTable = enhancedClient.table("Usuario", TableSchema.fromBean(User.class));
+        this.usernameIndex = this.userTable.index("username-index");
     }
 
     public User save(User user) {
@@ -39,7 +39,10 @@ public class UserRepository {
 
     public List<User> findAll() {
         // Cuidado: a operação scan() lê a tabela inteira, pode ser custosa em produção.
-        return userTable.scan().items().stream().collect(Collectors.toList());
+        // A correção é fazer o stream das páginas e então "achatar" os itens de cada página em um único stream.
+        return userTable.scan().stream()
+                .flatMap(page -> page.items().stream())
+                .collect(Collectors.toList());
     }
 
     public void deleteById(String id) {
@@ -67,5 +70,13 @@ public class UserRepository {
             // Execute the batch write operation for the current chunk.
             enhancedClient.batchWriteItem(r -> r.addWriteBatch(writeBatchBuilder.build()));
         }
+        }
+
+    public Optional<User> findByUsername(String username){
+        QueryConditional queryConditional =  QueryConditional.keyEqualTo(K -> K.partitionValue(username));
+        // A mesma lógica de paginação se aplica aqui.
+        return this.usernameIndex.query(queryConditional).stream()
+                .flatMap(page -> page.items().stream())
+                .findFirst();
     }
 }

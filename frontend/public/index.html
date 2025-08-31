@@ -4,21 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Só Joga</title>
-    <link rel="stylesheet" href="static/css/style.css">
-    <link rel="icon" type="image/png" href="img/So Joga.png">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="icon" type="image/png" href="/img/So Joga.png">
 </head>
 <body>
     <header class="navbar">
         <div class="logo">
-            <img src="img/So Joga.png" alt="Só Joga">
+            <img src="/img/So Joga.png" alt="Só Joga">
         </div>
         <nav class="menu">
             <ul>
-                <li><a href="index.html">Página Inicial</a></li>
+                <li><a href="/">Página Inicial</a></li>
                 <li><a href="#">Sobre Nós</a></li>
                 <li><a href="#">Serviços</a></li>
                 <li><a href="#">Contato</a></li>
-                <li><a href="cadastro.html">Cadastre-se</a></li>
+                <li><a href="/cadastro.html">Cadastre-se</a></li>
                 <li><a href="#" id="login-btn">Login</a></li>
             </ul>
         </nav>
@@ -75,7 +75,8 @@
             password: document.getElementById('popup-password').value
         };
 
-        const backendUrl = 'http://localhost:8787/api/login';
+        // O caminho da API agora é relativo. O Nginx irá redirecionar a chamada para o backend.
+        const backendUrl = '/api/login';
 
         try {
             const response = await fetch(backendUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(loginData) });
@@ -94,6 +95,8 @@
             console.error('Erro:', error);
         }
     });
+    // Adiciona o script principal para funcionalidades futuras da página.
     </script>
+    <script src="/static/js/main.js" defer></script>
 </body>
 </html>

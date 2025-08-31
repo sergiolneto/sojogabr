@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -34,6 +35,9 @@ class AuthControllerTest {
     @MockBean
     private UserRepository userRepository;
 
+    @MockBean
+    private PasswordEncoder passwordEncoder;
+
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -44,8 +48,7 @@ class AuthControllerTest {
     void setUp() {
         user = new User();
         user.setId("testuser"); // Assuming username is the ID for login
-        user.setUsername("testuser");
-        // The controller logic currently hardcodes "senha123" for the password check.
+        user.setUsername("testuser");        
         user.setPassword("some-hashed-password");
 
         loginRequest = new LoginRequest();
@@ -56,7 +59,10 @@ class AuthControllerTest {
     @Test
     @DisplayName("Deve retornar status 200 OK ao logar com credenciais válidas")
     void login_whenCredentialsAreValid_shouldReturnOk() throws Exception {
-        when(userRepository.findById("testuser")).thenReturn(Optional.of(user));
+        // 1. Mock do método correto: findByUsername
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        // 2. Mock do PasswordEncoder para simular uma senha válida
+        when(passwordEncoder.matches("senha123", "some-hashed-password")).thenReturn(true);
 
         mockMvc.perform(post("/api/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -69,7 +75,9 @@ class AuthControllerTest {
     @DisplayName("Deve retornar status 401 Unauthorized com senha inválida")
     void login_whenPasswordIsInvalid_shouldReturnUnauthorized() throws Exception {
         loginRequest.setPassword("wrongpassword");
-        when(userRepository.findById("testuser")).thenReturn(Optional.of(user));
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        // Simula que a senha não bate
+        when(passwordEncoder.matches("wrongpassword", "some-hashed-password")).thenReturn(false);
 
         mockMvc.perform(post("/api/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -81,7 +89,7 @@ class AuthControllerTest {
     @DisplayName("Deve retornar status 401 Unauthorized para usuário inexistente")
     void login_whenUserNotFound_shouldReturnUnauthorized() throws Exception {
         loginRequest.setUsername("nonexistentuser");
-        when(userRepository.findById("nonexistentuser")).thenReturn(Optional.empty());
+        when(userRepository.findByUsername("nonexistentuser")).thenReturn(Optional.empty());
 
         mockMvc.perform(post("/api/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -95,6 +103,9 @@ class AuthControllerTest {
         User newUser = new User();
         newUser.setUsername("newuser");
         newUser.setPassword("password");
+
+        // Mock da codificação da senha
+        when(passwordEncoder.encode("password")).thenReturn("encoded-password");
 
         // Mock the behavior of the repository save method
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {

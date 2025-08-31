@@ -28,6 +28,8 @@ services:
       - SPRING_CLOUD_AWS_REGION_STATIC=${AWS_REGION}
       - SPRING_CLOUD_AWS_CREDENTIALS_ACCESS-KEY=${AWS_ACCESS_KEY_ID}
       - SPRING_CLOUD_AWS_CREDENTIALS_SECRET-KEY=${AWS_SECRET_ACCESS_KEY}
+      # Garante que a aplicação Spring Boot inicie na mesma porta usada pelo healthcheck.
+      - SERVER_PORT=${BACKEND_PORT:-8787}
     depends_on:
       localstack:
         condition: service_started

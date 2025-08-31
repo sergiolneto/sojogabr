@@ -3,6 +3,7 @@ package com.br.sojogabr.domain.model;
 import lombok.*;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondaryPartitionKey;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,5 +30,10 @@ public class User {
     @DynamoDbPartitionKey
     public String getId() {
         return id;
+    }
+
+    @DynamoDbSecondaryPartitionKey(indexNames = "username-index")
+    public String getUsername() {
+        return username;
     }
 }

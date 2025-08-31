@@ -4,17 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro de Usuário - Só Joga</title>
-    <link rel="stylesheet" href="static/css/style.css">
-    <link rel="icon" type="image/png" href="img/So Joga.png">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="icon" type="image/png" href="/img/So Joga.png">
 </head>
 <body>
     <header class="navbar">
         <div class="logo">
-            <img src="img/So Joga.png" alt="Só Joga">
+            <img src="/img/So Joga.png" alt="Só Joga">
         </div>
         <nav class="menu">
             <ul>
-                <li><a href="index.html">Página Inicial</a></li>
+                <li><a href="/">Página Inicial</a></li>
             </ul>
         </nav>
     </header>
@@ -98,7 +98,8 @@
             esportes: esportes
         };
 
-        const backendUrl = 'http://localhost:8787/api/users';
+        // O caminho da API agora é relativo para que o Nginx possa redirecionar a chamada.
+        const backendUrl = '/api/users';
 
         try {
             const response = await fetch(backendUrl, {

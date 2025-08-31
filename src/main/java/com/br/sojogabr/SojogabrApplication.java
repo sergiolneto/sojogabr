@@ -24,7 +24,7 @@ public class SojogabrApplication {
 	public CommandLineRunner commandLineRunner(Environment env) {
 		return args -> {
 			String appName = env.getProperty("spring.application.name", "SojogabrApplication");
-			String port = env.getProperty("server.port", "8080");
+			String port = env.getProperty("server.port", "8787");
 			String contextPath = env.getProperty("server.servlet.context-path", "");
 			String profiles = String.join(", ", env.getActiveProfiles());
 
