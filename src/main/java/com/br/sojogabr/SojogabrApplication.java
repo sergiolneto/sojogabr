@@ -28,12 +28,18 @@ public class SojogabrApplication {
 			String contextPath = env.getProperty("server.servlet.context-path", "");
 			String profiles = String.join(", ", env.getActiveProfiles());
 
-			log.info("\n----------------------------------------------------------\n\t" +
-					"Aplicação '{}' iniciada com sucesso!\n\t" +
-					"Perfis ativos: {}\n\t" +
-					"Acesso local: http://localhost:{}{}\n\t" +
-					"Health Check: http://localhost:{}{}/actuator/health\n" +
-					"----------------------------------------------------------",
+			log.info("""
+                            
+                            ----------------------------------------------------------
+                            \t\
+                            Aplicação '{}' iniciada com sucesso!
+                            \t\
+                            Perfis ativos: {}
+                            \t\
+                            Acesso local: http://localhost:{}{}
+                            \t\
+                            Health Check: http://localhost:{}{}/actuator/health
+                            ----------------------------------------------------------""",
 					appName, profiles, port, contextPath, port, contextPath);
 		};
 	}

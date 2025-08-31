@@ -3,7 +3,6 @@ package com.br.sojogabr.api;
 import com.br.sojogabr.api.dto.UserResponse;
 import com.br.sojogabr.api.dto.LoginRequest;
 import com.br.sojogabr.api.dto.UserLoginResponse;
-import com.br.sojogabr.domain.model.User;
 import com.br.sojogabr.domain.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
