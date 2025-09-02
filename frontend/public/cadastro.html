@@ -60,6 +60,10 @@
                         <label><input type="checkbox" name="esportes" value="Tenis"> Tênis</label>
                     </div>
                 </div>
+                <div class="form-group" id="team-name-group" style="display: none;">
+                    <label for="time">Nome do Time:</label>
+                    <input type="text" id="time" name="time">
+                </div>
                 <div class="form-group">
                     <label for="posicao">Posição/Função principal:</label>
                     <input type="text" id="posicao" name="posicao">
@@ -91,12 +95,14 @@
         // Mapeia os dados do formulário para o formato esperado pela API (User.java)
         const userData = {
             nome: formData.get('nome'),
+            email: formData.get('email'),
             username: formData.get('username'),
             password: formData.get('password'),
             endereco: formData.get('endereco'),
             celular: formData.get('celular'),
-            instagram: formData.get('instagram'),
+            insta: formData.get('insta'),
             posicao: formData.get('posicao'),
+            teamName: formData.get('teamName'),
             // O valor de um checkbox, se marcado, é 'on'. Convertemos para booleano.
             capitao: formData.get('capitao') === 'on',
             esportes: esportes
@@ -130,6 +136,28 @@
             console.error('Erro:', error);
         }
     });
+
+    // --- Lógica para exibir/ocultar o campo "Nome do Time" ---
+    const sportCheckboxes = document.querySelectorAll('input[name="esportes"]');
+    const teamNameGroup = document.getElementById('team-name-group');
+    const teamNameInput = document.getElementById('teamName');
+
+    function toggleTeamNameField() {
+        // Verifica se algum esporte que não seja 'Tenis' está marcado
+        const showTeamName = Array.from(sportCheckboxes).some(
+            checkbox => checkbox.checked && checkbox.value !== 'Tenis'
+        );
+
+        if (showTeamName) {
+            teamNameGroup.style.display = 'block';
+        } else {
+            teamNameGroup.style.display = 'none';
+            teamNameInput.value = ''; // Limpa o campo se ele for ocultado
+        }
+    }
+
+    // Adiciona o listener para cada checkbox de esporte
+    sportCheckboxes.forEach(checkbox => checkbox.addEventListener('change', toggleTeamNameField));
     </script>
 </body>
 </html>

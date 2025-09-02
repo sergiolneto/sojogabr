@@ -26,9 +26,11 @@
     </header>
 
     <main>
-        <section class="hero">
-            <h1>Bem-vindo ao Só Joga!</h1>
-            <p>A sua plataforma para organizar e participar de jogos.</p>
+        <section id="events-container">
+            <h2>Próximos Jogos e Campeonatos</h2>
+            <div id="events-grid" class="events-grid">
+                <!-- Os cards dos eventos serão inseridos aqui pelo JavaScript -->
+            </div>
         </section>
     </main>
 
@@ -52,67 +54,6 @@
         </div>
     </div>
 
-    <script>
-        // --- Lógica para abrir e fechar o popup de login ---
-        const loginBtn = document.getElementById('login-btn');
-        const loginPopup = document.getElementById('login-popup');
-        const closeBtn = loginPopup.querySelector('.close-btn');
-
-        // Abre o popup ao clicar em "Login"
-        loginBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            loginPopup.style.display = 'flex';
-        });
-
-        // Fecha o popup no botão 'x'
-        closeBtn.addEventListener('click', () => {
-            loginPopup.style.display = 'none';
-        });
-
-        // Fecha o popup se clicar fora dele
-        window.addEventListener('click', (e) => {
-            if (e.target === loginPopup) {
-                loginPopup.style.display = 'none';
-            }
-        });
-
-        // --- Lógica para submissão do formulário de login ---
-        document.getElementById('login-form').addEventListener('submit', async function(event) {
-            event.preventDefault();
-            const errorMessageDiv = document.getElementById('login-error-message');
-            errorMessageDiv.style.display = 'none'; // Esconde mensagens de erro antigas
-
-            const loginData = {
-                username: this.elements['username'].value,
-                password: this.elements['password'].value
-            };
-
-            try {
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(loginData)
-                });
-
-                const result = await response.json();
-
-                if (response.ok) { // Status 200-299
-                    // Sucesso! Atualiza a UI
-                    const loginNavItem = document.getElementById('login-nav-item');
-                    loginNavItem.innerHTML = `<span class="welcome-user">Bem-vindo, ${result.username}!</span>`;
-                    loginPopup.style.display = 'none'; // Fecha o popup
-                } else {
-                    // Erro (ex: 401 Unauthorized)
-                    errorMessageDiv.textContent = result.message || 'Ocorreu um erro.';
-                    errorMessageDiv.style.display = 'block';
-                }
-            } catch (error) {
-                errorMessageDiv.textContent = 'Erro de conexão com o servidor.';
-                errorMessageDiv.style.display = 'block';
-                console.error('Erro no login:', error);
-            }
-        });
-    </script>
     <script src="/static/js/main.js" defer></script>
 </body>
 </html>
