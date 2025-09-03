@@ -13,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -57,6 +58,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @WithMockUser
     @DisplayName("Deve retornar status 200 OK ao logar com credenciais válidas")
     void login_whenCredentialsAreValid_shouldReturnOk() throws Exception {
         // 1. Mock do método correto: findByUsername
@@ -98,6 +100,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @WithMockUser
     @DisplayName("Deve retornar status 201 Created ao salvar um novo usuário")
     void saveUser_whenUserIsValid_shouldReturnCreated() throws Exception {
         User newUser = new User();
