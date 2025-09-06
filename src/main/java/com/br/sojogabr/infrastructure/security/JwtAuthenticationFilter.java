@@ -36,7 +36,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      */
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) throws ServletException {
-        String requestPath = request.getServletPath();
+        // Usar getRequestURI() é mais robusto que getServletPath()
+        String requestPath = request.getRequestURI();
         // Retorna true (não filtra) se o caminho da requisição começar com algum dos caminhos públicos
         return publicPaths.stream().anyMatch(requestPath::startsWith);
     }
@@ -48,8 +49,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
         final String authHeader = request.getHeader("Authorization");
-        // A verificação do shouldNotFilter já garante que este filtro só rode em endpoints protegidos,
-        // mas mantemos esta checagem como uma camada extra de segurança.
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;

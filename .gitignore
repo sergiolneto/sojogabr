@@ -3,6 +3,8 @@ target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+LICENSE.txt
+
 
 ### STS ###
 .apt_generated
@@ -18,6 +20,8 @@ target/
 *.iws
 *.iml
 *.ipr
+*.exe
+
 
 ### NetBeans ###
 /nbproject/private/
