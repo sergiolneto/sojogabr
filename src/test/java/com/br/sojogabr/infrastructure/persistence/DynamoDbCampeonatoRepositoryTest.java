@@ -1,18 +1,15 @@
 package com.br.sojogabr.infrastructure.persistence;
 
+import com.br.sojogabr.AbstractIntegrationTest;
 import com.br.sojogabr.domain.model.campeonato.dynamo.CampeonatoItem;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.localstack.LocalStackContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
@@ -23,25 +20,12 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.testcontainers.containers.localstack.LocalStackContainer.Service.DYNAMODB;
 
-@Testcontainers
 @SpringBootTest
 @ActiveProfiles("test")
-class DynamoDbCampeonatoRepositoryTest {
-
-    @Container
-    static LocalStackContainer localStack =
-            new LocalStackContainer(DockerImageName.parse("localstack/localstack:3.2.0"))
-                    .withServices(DYNAMODB);
-
-    @DynamicPropertySource
-    static void overrideProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.cloud.aws.dynamodb.endpoint", () -> localStack.getEndpointOverride(DYNAMODB).toString());
-        registry.add("spring.cloud.aws.credentials.access-key", localStack::getAccessKey);
-        registry.add("spring.cloud.aws.credentials.secret-key", localStack::getSecretKey);
-        registry.add("spring.cloud.aws.region.static", localStack::getRegion);
-    }
+@Testcontainers // Adicionada para ativar o @DynamicPropertySource
+@Import(AbstractIntegrationTest.DynamoDbTestConfig.class)
+class DynamoDbCampeonatoRepositoryTest extends AbstractIntegrationTest {
 
     @Autowired
     private DynamoDbCampeonatoRepository campeonatoRepository;

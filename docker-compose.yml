@@ -32,9 +32,10 @@ services:
     environment:
       # Sobrescreve as propriedades para conectar ao LocalStack dentro da rede do Docker
       - SPRING_CLOUD_AWS_DYNAMODB_ENDPOINT=http://localstack:4566
-      - SPRING_CLOUD_AWS_REGION_STATIC=${AWS_REGION}
-      - SPRING_CLOUD_AWS_CREDENTIALS_ACCESS-KEY=${AWS_ACCESS_KEY_ID}
-      - SPRING_CLOUD_AWS_CREDENTIALS_SECRET-KEY=${AWS_SECRET_ACCESS_KEY}
+      # Define valores padrão para a região e credenciais, evitando a necessidade de um .env
+      - SPRING_CLOUD_AWS_REGION_STATIC=sa-east-1
+      - SPRING_CLOUD_AWS_CREDENTIALS_ACCESS-KEY=test
+      - SPRING_CLOUD_AWS_CREDENTIALS_SECRET-KEY=test
       # Garante que a aplicação Spring Boot inicie na mesma porta usada pelo healthcheck.
       - SERVER_PORT=${BACKEND_PORT:-8787}
     depends_on:

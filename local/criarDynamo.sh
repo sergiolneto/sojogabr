@@ -1,32 +1,20 @@
 #!/bin/bash
-echo "----------- Criando tabela DynamoDB: Usuario -----------"
+echo "=================================================="
+echo "Aguardando LocalStack estar pronto..."
+echo "=================================================="
 
-aws dynamodb create-table \
-    --table-name Usuario \
-    --attribute-definitions \
-        AttributeName=id,AttributeType=S \
-        AttributeName=username,AttributeType=S \
-    --key-schema \
-        AttributeName=id,KeyType=HASH \
-    --provisioned-throughput \
-        ReadCapacityUnits=5,WriteCapacityUnits=5 \
-    --global-secondary-indexes \
-        "[
-            {
-                \"IndexName\": \"username-index\",
-                \"KeySchema\": [
-                    {\"AttributeName\":\"username\",\"KeyType\":\"HASH\"}
-                ],
-                \"Projection\": {
-                    \"ProjectionType\":\"ALL\"
-                },
-                \"ProvisionedThroughput\": {
-                    \"ReadCapacityUnits\": 5,
-                    \"WriteCapacityUnits\": 5
-                }
-            }
-        ]" \
-    --endpoint-url http://localhost:4566 \
-    --region sa-east-1
+# Este loop aguarda até que o serviço DynamoDB esteja disponível dentro do LocalStack
+until awslocal dynamodb list-tables; do
+  >&2 echo "DynamoDB não está pronto ainda - aguardando..."
+  sleep 1
+done
 
-echo "----------- Tabela criada com sucesso. -----------"
+echo "=================================================="
+echo "Criando a tabela 'SojogaBrTable' no DynamoDB..."
+echo "=================================================="
+
+awslocal dynamodb create-table \
+    --table-name SojogaBrTable \
+    --attribute-definitions AttributeName=id,AttributeType=S \
+    --key-schema AttributeName=id,KeyType=HASH \
+    --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5

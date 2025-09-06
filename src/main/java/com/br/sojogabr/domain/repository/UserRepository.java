@@ -31,8 +31,12 @@ public class UserRepository {
         return user;
     }
 
-    public Optional<User> findById(String id) {
-        Key key = Key.builder().partitionValue(id).build();
+    public Optional<User> findById(String pk) {
+        // A chave primária do usuário é composta pela PK (id) e a SK (fixa como "METADATA")
+        Key key = Key.builder()
+                .partitionValue(pk)
+                .sortValue("METADATA") // Adiciona a chave de ordenação que estava faltando
+                .build();
         return Optional.ofNullable(userTable.getItem(key));
     }
 

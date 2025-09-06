@@ -102,7 +102,7 @@
             celular: formData.get('celular'),
             insta: formData.get('insta'),
             posicao: formData.get('posicao'),
-            teamName: formData.get('teamName'),
+            time: formData.get('time'), // Corrigido de 'teamName' para 'time' para corresponder ao formulário
             // O valor de um checkbox, se marcado, é 'on'. Convertemos para booleano.
             capitao: formData.get('capitao') === 'on',
             esportes: esportes
@@ -140,7 +140,7 @@
     // --- Lógica para exibir/ocultar o campo "Nome do Time" ---
     const sportCheckboxes = document.querySelectorAll('input[name="esportes"]');
     const teamNameGroup = document.getElementById('team-name-group');
-    const teamNameInput = document.getElementById('teamName');
+    const teamNameInput = document.getElementById('time'); // Corrigido de 'teamName' para 'time'
 
     function toggleTeamNameField() {
         // Verifica se algum esporte que não seja 'Tenis' está marcado
