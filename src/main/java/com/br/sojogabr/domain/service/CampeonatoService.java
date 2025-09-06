@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.TransactWriteItemsEnhancedRequest;
 
 import java.time.LocalDate;
@@ -19,13 +18,10 @@ public class CampeonatoService {
     private final DynamoDbTable<CampeonatoItem> campeonatoTable;
     private final DynamoDbEnhancedClient enhancedClient;
 
-    // O nome da sua tabela DynamoDB, que viria de um arquivo de configuração
-    private final String tableName = "SojogaBrTable";
-
     @Autowired
-    public CampeonatoService(DynamoDbEnhancedClient enhancedClient) {
+    public CampeonatoService(DynamoDbTable<CampeonatoItem> campeonatoTable, DynamoDbEnhancedClient enhancedClient) {
+        this.campeonatoTable = campeonatoTable;
         this.enhancedClient = enhancedClient;
-        this.campeonatoTable = enhancedClient.table(tableName, TableSchema.fromBean(CampeonatoItem.class));
     }
 
     /**

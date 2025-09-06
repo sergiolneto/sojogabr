@@ -16,6 +16,9 @@ RUN mvn package -DskipTests
 # Estágio 2: Cria a imagem final com o JRE para um tamanho menor
 FROM eclipse-temurin:17-jre-alpine
 
+# Instala o curl, que é necessário para o comando do healthcheck no docker-compose.yml
+RUN apk add --no-cache curl
+
 # Cria um usuário e grupo específicos para a aplicação
 RUN addgroup -S sojoga && adduser -S sojoga -G sojoga
 

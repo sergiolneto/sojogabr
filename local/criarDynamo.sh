@@ -10,11 +10,11 @@ until awslocal dynamodb list-tables; do
 done
 
 echo "=================================================="
-echo "Criando a tabela 'SojogaBrTable' no DynamoDB..."
+echo "Criando a tabela 'Usuario' no DynamoDB..."
 echo "=================================================="
 
 awslocal dynamodb create-table \
-    --table-name SojogaBrTable \
+    --table-name Usuario \
     --attribute-definitions AttributeName=id,AttributeType=S \
     --key-schema AttributeName=id,KeyType=HASH \
     --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5

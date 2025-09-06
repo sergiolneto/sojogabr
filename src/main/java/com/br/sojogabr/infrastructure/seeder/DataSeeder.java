@@ -1,10 +1,12 @@
 package com.br.sojogabr.infrastructure.seeder;
 
 import com.br.sojogabr.domain.model.User;
+import com.br.sojogabr.domain.service.CampeonatoService;
 import com.br.sojogabr.domain.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -20,16 +22,19 @@ import java.util.UUID;
  */
 @Component
 @Profile("dev") // Garante que este seeder não rode em produção
+@Order(2) // Garante que este bean seja executado depois dos inicializadores
 public class DataSeeder implements CommandLineRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(DataSeeder.class);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CampeonatoService campeonatoService;
 
-    public DataSeeder(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public DataSeeder(UserRepository userRepository, PasswordEncoder passwordEncoder, CampeonatoService campeonatoService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.campeonatoService = campeonatoService;
     }
 
     @Override
@@ -38,6 +43,7 @@ public class DataSeeder implements CommandLineRunner {
         if (userRepository.findByUsername("admin").isEmpty()) {
             logger.info("Banco de dados vazio. Populando com dados iniciais...");
             createUsers();
+            createChampionships();
             logger.info("Povoamento do banco de dados concluído.");
         } else {
             logger.info("O banco de dados já contém dados. O seeder não será executado.");
@@ -80,5 +86,20 @@ public class DataSeeder implements CommandLineRunner {
         // - Times
         // - Campeonatos de exemplo (usando o CriarCampeonatoUseCase)
         // - Partidas
+    }
+
+    private void createChampionships() {
+        logger.info("Criando campeonatos de exemplo...");
+
+        // Mock de IDs de times para o campeonato. Em um cenário real,
+        // eles viriam de um repositório de times.
+        List<String> teamIds = List.of(UUID.randomUUID().toString(), UUID.randomUUID().toString());
+
+        campeonatoService.criarCampeonato(
+                "Copa de Verão Sojoga",
+                "Futebol",
+                teamIds
+        );
+        logger.info("Campeonato 'Copa de Verão Sojoga' criado.");
     }
 }

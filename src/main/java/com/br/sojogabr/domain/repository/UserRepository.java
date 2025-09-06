@@ -17,11 +17,11 @@ public class UserRepository {
     private static final Logger logger = LoggerFactory.getLogger(UserRepository.class);
 
     /**
-     * O Spring injeta o DynamoDbEnhancedClient automaticamente.
-     * Usamos ele para obter uma referência à nossa tabela "Usuario".
+     * O Spring injeta o bean DynamoDbTable<User> que foi configurado em DynamoDbConfig.
+     * Isso centraliza a configuração do nome da tabela.
      */
-    public UserRepository(DynamoDbEnhancedClient enhancedClient) {
-        this.userTable = enhancedClient.table("Usuario", TableSchema.fromBean(User.class));
+    public UserRepository(DynamoDbTable<User> userTable) {
+        this.userTable = userTable;
         this.usernameIndex = this.userTable.index("username-index");
     }
 

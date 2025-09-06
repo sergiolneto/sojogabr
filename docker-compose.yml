@@ -47,10 +47,10 @@ services:
     healthcheck:
       # Testa se a aplicação está respondendo no endpoint de saúde do Actuator
       test: ["CMD", "curl", "-f", "http://localhost:${BACKEND_PORT:-8787}/actuator/health"]
-      interval: 15s
+      interval: 30s
       timeout: 5s
       retries: 5
-      start_period: 30s # Dá 30 segundos para a aplicação iniciar antes de começar os checks
+      start_period: 30s # Período de tolerância para o startup da aplicação
 
   frontend:
     build:
@@ -59,11 +59,16 @@ services:
     ports:
       - "${FRONTEND_PORT:-8080}:80" # Acesse o frontend em http://localhost:8080
     depends_on:
-      localstack:
+      backend:
         condition: service_healthy
     networks:
       - sojoga-net
-
+    healthcheck:
+      # Testa se o servidor web (Nginx) dentro do contêiner do frontend está respondendo.
+      test: [ "CMD", "curl", "-f", "http://localhost:80/index.html" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 networks:
   sojoga-net:
     driver: bridge

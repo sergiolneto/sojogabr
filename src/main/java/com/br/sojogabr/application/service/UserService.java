@@ -5,9 +5,10 @@ import com.br.sojogabr.api.exception.UserAlreadyExistsException;
 import com.br.sojogabr.application.port.in.UserUseCase;
 import com.br.sojogabr.domain.model.User;
 import com.br.sojogabr.domain.repository.UserRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +21,8 @@ public class UserService implements UserUseCase, UserDetailsService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    // A anotação @Lazy quebra a referência circular entre SecurityConfig e UserService
+    public UserService(UserRepository userRepository, @Lazy PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -55,7 +57,10 @@ public class UserService implements UserUseCase, UserDetailsService {
         newUser.setEmail(request.email());
         newUser.setPassword(passwordEncoder.encode(request.password()));
         newUser.setEsportes(request.esportes());
-        newUser.setId(UUID.randomUUID().toString()); // A geração de ID pode permanecer aqui ou ir para o repositório.
+        newUser.setId(UUID.randomUUID().toString());
+
+        newUser.setPk("USER#" + newUser.getUsername());
+        newUser.setSk("METADATA");
         
         return userRepository.save(newUser);
     }
