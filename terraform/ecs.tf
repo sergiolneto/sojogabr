@@ -58,6 +58,10 @@ resource "aws_ecs_task_definition" "sojoga_backend_task" {
         {
           name  = "DYNAMODB_CAMPEONATO_TABLE_NAME",
           value = "SojogaBrTable-${var.environment}" # Supondo que você criará esta tabela também
+        },
+        {
+          name = "CORS_ALLOWED_ORIGINS",
+          value = "https://www.seu-frontend-de-producao.com.br" # IMPORTANTE: Mude para o seu domínio real
         }
       ]
       # Injetando o segredo do JWT de forma segura
