@@ -1,21 +1,22 @@
 package com.br.sojogabr.api;
 
-import java.net.URI;
-
 import com.br.sojogabr.api.dto.RegisterRequest;
+import com.br.sojogabr.api.dto.UserResponse;
 import com.br.sojogabr.application.port.in.UserUseCase;
+import com.br.sojogabr.domain.model.User;
 import jakarta.validation.Valid;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.br.sojogabr.api.dto.UserResponse;
-import com.br.sojogabr.domain.model.User;
+import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
@@ -43,5 +44,16 @@ public class UserController {
                 .map(UserResponse::fromEntity)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Captura exceções de validação (@Valid) especificamente para este controller.
+     * Retorna um status 400 (Bad Request) com um mapa dos campos e seus respectivos erros.
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = ex.getBindingResult().getFieldErrors().stream()
+                .collect(Collectors.toMap(FieldError::getField, DefaultMessageSourceResolvable::getDefaultMessage));
+        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 }

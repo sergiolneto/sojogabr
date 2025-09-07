@@ -1,8 +1,8 @@
 # terraform/dynamodb.tf
 
 resource "aws_dynamodb_table" "user_table" {
-  # O nome da tabela que sua aplicação espera.
-  name = "Usuario"
+  # O nome da tabela será sufixado com o ambiente (ex: Usuario-hom, Usuario-prod)
+  name = "Usuario-${var.environment}"
 
   # Define o modo de cobrança como "sob demanda", que é ideal para
   # aplicações com tráfego imprevisível. Você só paga pelo que usa.
@@ -20,8 +20,8 @@ resource "aws_dynamodb_table" "user_table" {
 
   # Tags são essenciais para organização e controle de custos.
   tags = {
-    Project     = "sojoga-br"
+    Project     = var.project_name
     ManagedBy   = "Terraform"
-    Environment = "production" # Ou "development", dependendo do workspace
+    Environment = var.environment
   }
 }

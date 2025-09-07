@@ -1,0 +1,47 @@
+# .github/workflows/terraform-deploy.yml
+
+name: 'Terraform Deploy PROD'
+
+on:
+  push:
+    branches:
+      - main # Dispara SOMENTE em push para a branch main
+
+jobs:
+  deploy-prod:
+    name: 'Deploy Infra to Produção'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: 
+      name: producao # Aponta para o Environment do GitHub
+      url: 'http://sojoga.com.br' # Opcional: URL do ambiente de produção
+
+    defaults:
+      run:
+        working-directory: ./terraform
+
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+
+      - name: 'Configure AWS Credentials'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: sa-east-1 # Alinhando com a região do deploy da app
+
+      - name: 'Setup Terraform'
+        uses: hashicorp/setup-terraform@v3
+
+      - name: 'Terraform Init'
+        run: terraform init
+
+      - name: 'Terraform Workspace'
+        run: terraform workspace select prod || terraform workspace new prod
+
+      - name: 'Terraform Plan'
+        run: terraform plan -var="environment=prod" -var="jwt_secret_arn=${{ secrets.JWT_SECRET_ARN }}" -out=tfplan
+
+      - name: 'Terraform Apply'
+        run: terraform apply -auto-approve tfplan

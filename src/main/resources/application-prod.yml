@@ -1,0 +1,5 @@
+# Configurações para o ambiente de Produção
+aws:
+  dynamodb:
+    user-tableName: Sojoga_Usuario_PROD
+    campeonato-tableName: Sojoga_Campeonato_PROD
