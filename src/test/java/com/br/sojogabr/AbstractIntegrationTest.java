@@ -12,6 +12,12 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.model.AttributeDefinition;
+import software.amazon.awssdk.services.dynamodb.model.CreateTableRequest;
+import software.amazon.awssdk.services.dynamodb.model.KeySchemaElement;
+import software.amazon.awssdk.services.dynamodb.model.KeyType;
+import software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughput;
+import software.amazon.awssdk.services.dynamodb.model.ScalarAttributeType;
 
 import java.time.Duration;
 
@@ -44,7 +50,7 @@ public abstract class AbstractIntegrationTest {
 
         @Bean
         public DynamoDbClient dynamoDbClient() {
-            return DynamoDbClient.builder()
+            DynamoDbClient client = DynamoDbClient.builder()
                     .endpointOverride(localStack.getEndpointOverride(DYNAMODB))
                     .credentialsProvider(
                             StaticCredentialsProvider.create(
@@ -53,12 +59,49 @@ public abstract class AbstractIntegrationTest {
                     )
                     .region(Region.of(localStack.getRegion()))
                     .build();
+
+            // Cria as tabelas necessárias para os testes de integração
+            client.createTable(createUserTableRequest());
+            client.createTable(createCampeonatoTableRequest());
+
+            System.out.println("Tabelas 'Usuario' e 'SojogaBrTable' criadas para os testes.");
+
+            return client;
         }
 
         @Bean
         public DynamoDbEnhancedClient dynamoDbEnhancedClient(DynamoDbClient dynamoDbClient) {
             return DynamoDbEnhancedClient.builder()
                     .dynamoDbClient(dynamoDbClient)
+                    .build();
+        }
+
+        private CreateTableRequest createUserTableRequest() {
+            return CreateTableRequest.builder()
+                    .tableName("Usuario")
+                    .keySchema(KeySchemaElement.builder().attributeName("id").keyType(KeyType.HASH).build())
+                    .attributeDefinitions(AttributeDefinition.builder().attributeName("id").attributeType(ScalarAttributeType.S).build())
+                    .provisionedThroughput(ProvisionedThroughput.builder().readCapacityUnits(5L).writeCapacityUnits(5L).build())
+                    .build();
+        }
+
+        /**
+         * Cria a definição da tabela 'SojogaBrTable' para o ambiente de testes.
+         * IMPORTANTE: Verifique se os nomes dos atributos 'pk' e 'sk'
+         * correspondem à sua entidade de Campeonato (CampeonatoItem).
+         */
+        private CreateTableRequest createCampeonatoTableRequest() {
+            return CreateTableRequest.builder()
+                    .tableName("SojogaBrTable")
+                    .keySchema(
+                            KeySchemaElement.builder().attributeName("pk").keyType(KeyType.HASH).build(), // Chave de Partição (PK)
+                            KeySchemaElement.builder().attributeName("sk").keyType(KeyType.RANGE).build()      // Chave de Ordenação (SK)
+                    )
+                    .attributeDefinitions(
+                            AttributeDefinition.builder().attributeName("pk").attributeType(ScalarAttributeType.S).build(),
+                            AttributeDefinition.builder().attributeName("sk").attributeType(ScalarAttributeType.S).build()
+                    )
+                    .provisionedThroughput(ProvisionedThroughput.builder().readCapacityUnits(5L).writeCapacityUnits(5L).build())
                     .build();
         }
     }

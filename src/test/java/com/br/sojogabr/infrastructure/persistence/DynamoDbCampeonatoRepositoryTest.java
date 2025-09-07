@@ -2,10 +2,10 @@ package com.br.sojogabr.infrastructure.persistence;
 
 import com.br.sojogabr.AbstractIntegrationTest;
 import com.br.sojogabr.domain.model.campeonato.dynamo.CampeonatoItem;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
@@ -33,19 +33,8 @@ class DynamoDbCampeonatoRepositoryTest extends AbstractIntegrationTest {
     @Autowired
     private DynamoDbEnhancedClient enhancedClient;
 
-    private DynamoDbTable<CampeonatoItem> campeonatoTable;
-
-    @BeforeEach
-    void setUp() {
-        String tableName = "sojoga-test-table";
-        campeonatoTable = enhancedClient.table(tableName, TableSchema.fromBean(CampeonatoItem.class));
-        try {
-            campeonatoTable.deleteTable();
-        } catch (Exception e) {
-            // Ignora caso a tabela não exista na primeira execução
-        }
-        campeonatoTable.createTable();
-    }
+    @Value("${aws.dynamodb.campeonato-tableName}")
+    private String tableName;
 
     @Test
     @DisplayName("Deve salvar um campeonato com seus times e classificações em uma transação")
@@ -65,6 +54,7 @@ class DynamoDbCampeonatoRepositoryTest extends AbstractIntegrationTest {
         assertThat(resultado.getNome()).isEqualTo(nome);
 
         // Verifica diretamente no DynamoDB se todos os itens foram criados
+        DynamoDbTable<CampeonatoItem> campeonatoTable = enhancedClient.table(tableName, TableSchema.fromBean(CampeonatoItem.class));
         Key queryKey = Key.builder().partitionValue(resultado.getPk()).build();
         List<CampeonatoItem> items = campeonatoTable.query(QueryConditional.keyEqualTo(queryKey)).items().stream().toList();
 
