@@ -42,6 +42,37 @@ jobs:
       - name: 'Terraform Workspace'
         run: terraform workspace select prod || terraform workspace new prod
 
+      - name: 'Import Existing Resources'
+        id: import
+        run: |
+          # O "|| true" no final de cada comando garante que o workflow não falhe se o recurso não existir para ser importado.
+          # Isso torna o pipeline resiliente para a primeira execução e para as subsequentes.
+          
+          echo "Attempting to import existing resources..."
+          
+          # Importar Tabela DynamoDB
+          terraform import aws_dynamodb_table.user_table Usuario-prod || true
+          
+          # Importar Repositório ECR
+          terraform import aws_ecr_repository.sojoga_backend_repo sojoga-backend-prod || true
+          
+          # Importar Role do IAM
+          terraform import aws_iam_role.ecs_task_execution_role ecs-task-execution-role-prod || true
+          
+          # Importar Internet Gateway (ID pego do log de erro anterior)
+          terraform import aws_internet_gateway.gw igw-0b9a57d3570e0eb60 || true
+          
+          # Importar Target Group (precisa buscar o ARN primeiro)
+          TG_ARN=$(aws elbv2 describe-target-groups --names tg-sojoga-br-prod --region sa-east-1 --query "TargetGroups[0].TargetGroupArn" --output text | tr -d '\r')
+          if [ -n "$TG_ARN" ]; then
+            echo "Importing Target Group: $TG_ARN"
+            terraform import aws_lb_target_group.main "$TG_ARN" || true
+          else
+            echo "Target Group 'tg-sojoga-br-prod' not found, skipping import."
+          fi
+          
+          echo "Import step finished."
+
       - name: 'Terraform Plan'
         run: terraform plan -var="environment=prod" -var="jwt_secret_arn=${{ secrets.JWT_SECRET_ARN }}" -out=tfplan
 
