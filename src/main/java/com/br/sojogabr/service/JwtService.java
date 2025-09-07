@@ -1,9 +1,12 @@
 package com.br.sojogabr.service;
 
+import com.br.sojogabr.application.port.out.TokenProvider;
+import com.br.sojogabr.domain.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +15,8 @@ import java.util.Date;
 import java.util.function.Function;
 
 @Service
-public class JwtService {
+@Primary
+public class JwtService implements TokenProvider {
 
     @Value("${jwt.secret:umaChaveSecretaMuitoSeguraParaAssinarTokensJwt}")
     private String secret;
@@ -24,10 +28,11 @@ public class JwtService {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String generateToken(UserDetails userDetails) {
+    @Override
+    public String generateToken(User user) {
         long now = System.currentTimeMillis();
         return Jwts.builder()
-                .claim("sub", userDetails.getUsername())
+                .claim("sub", user.getUsername())
                 .claim("iat", new Date(now))
                 .claim("exp", new Date(now + expiration))
                 .signWith(getSigningKey())
