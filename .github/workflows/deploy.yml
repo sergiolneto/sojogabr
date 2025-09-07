@@ -12,6 +12,9 @@ jobs:
     if: github.ref == 'refs/heads/main' # Só executa se o push for na branch main
     runs-on: ubuntu-latest
     environment: producao # Usa o ambiente "producao" para regras de proteção e segredos
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -19,8 +22,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_PROD }}
           aws-region: sa-east-1
 
       - name: Login to Amazon ECR
