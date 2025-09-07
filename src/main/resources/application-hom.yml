@@ -1,0 +1,5 @@
+# Configurações para o ambiente de Homologação
+aws:
+  dynamodb:
+    user-tableName: Sojoga_Usuario_HOM
+    campeonato-tableName: Sojoga_Campeonato_HOM

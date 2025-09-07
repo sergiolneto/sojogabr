@@ -1,0 +1,16 @@
+# Configurações comuns a todos os ambientes
+server:
+  port: 8787
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+jwt:
+  secret: ${JWT_SECRET} # Usa uma variável de ambiente para o segredo
+  expiration: 86400000
+
+cors:
+  allowed-origins: http://localhost:8080
