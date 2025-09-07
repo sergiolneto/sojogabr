@@ -27,5 +27,8 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Make Maven Wrapper executable
+        run: chmod +x ./mvnw
+
       - name: Build and test with Maven
         run: ./mvnw clean install # 'install' compila, testa e empacota a aplicação
