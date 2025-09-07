@@ -10,3 +10,8 @@ variable "project_name" {
   type        = string
   default     = "sojoga-br"
 }
+
+variable "jwt_secret_arn" {
+  description = "O ARN do segredo JWT armazenado no AWS Secrets Manager."
+  type        = string
+}

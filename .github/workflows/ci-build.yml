@@ -1,0 +1,31 @@
+# .github/workflows/ci-build.yml
+
+name: CI Build & Test
+
+on:
+  push:
+    branches:
+      - develop
+      - homolog
+  pull_request:
+    branches:
+      - develop
+      - homolog
+      - main
+
+jobs:
+  build:
+    name: Build, Test and Validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build and test with Maven
+        run: ./mvnw clean install # 'install' compila, testa e empacota a aplicação
