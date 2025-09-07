@@ -11,7 +11,7 @@ jobs:
     name: Deploy App to Produção
     if: github.ref == 'refs/heads/main' # Só executa se o push for na branch main
     runs-on: ubuntu-latest
-    environment: producao # Usa o ambiente "producao" para regras de proteção e segredos
+    environment: producao
     permissions:
       id-token: write
       contents: read
