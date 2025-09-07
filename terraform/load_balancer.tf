@@ -4,7 +4,7 @@
 resource "aws_security_group" "lb_sg" {
   name        = "lb-sg-${var.project_name}-${var.environment}"
   description = "Allow HTTP inbound traffic"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = data.aws_vpc.main.id # Correção: usa o data source da VPC
 
   ingress {
     from_port   = 80
@@ -27,7 +27,7 @@ resource "aws_lb" "main" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.lb_sg.id]
-  subnets            = aws_subnet.public[*].id
+  subnets            = data.aws_subnets.public.ids # Correção: usa o data source das sub-redes
 }
 
 # Cria um Target Group, que é o grupo de alvos (nossas tarefas ECS) para o ALB
@@ -35,7 +35,7 @@ resource "aws_lb_target_group" "main" {
   name        = "tg-${var.project_name}-${var.environment}"
   port        = 8080
   protocol    = "HTTP"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = data.aws_vpc.main.id # Correção: usa o data source da VPC
   target_type = "ip"
   health_check {
     path = "/actuator/health" # Usa o endpoint de saúde do Spring Boot

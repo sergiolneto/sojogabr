@@ -1,23 +1,51 @@
-# terraform/network.tf
 
-# Cria uma nova VPC para isolar os recursos do projeto
-resource "aws_vpc" "main" {
-  cidr_block = "10.0.0.0/16"
-  enable_dns_support   = true
-  enable_dns_hostnames = true
+# Obtém a VPC que está sendo usada (assumindo que foi criada manualmente ou por outro processo)
+data "aws_vpc" "main" {
+  default = true # Altere para `false` e use `id = "vpc-..."` se não for a VPC padrão
+}
+
+# Obtém as sub-redes públicas existentes na VPC
+data "aws_subnets" "public" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.main.id]
+  }
+  # Adicione tags se precisar filtrar sub-redes específicas
+  # tags = {
+  #   Tier = "Public"
+  # }
+}
+
+# 1. Cria o Internet Gateway
+resource "aws_internet_gateway" "gw" {
+  vpc_id = data.aws_vpc.main.id
+
   tags = {
-    Name = "vpc-${var.project_name}-${var.environment}"
+    Name = "sojoga-igw"
+    Environment = "prod"
   }
 }
 
-# Cria duas subnets públicas em zonas de disponibilidade diferentes para alta disponibilidade
-resource "aws_subnet" "public" {
-  count = 2
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.${count.index + 1}.0/24"
-  availability_zone = "sa-east-1${element(["a", "b"], count.index)}" # Garante AZs diferentes em São Paulo
-  map_public_ip_on_launch = true
+# 2. Cria uma nova tabela de rotas para a VPC
+resource "aws_route_table" "public_rt" {
+  vpc_id = data.aws_vpc.main.id
+
+  # 3. Adiciona uma rota que direciona o tráfego da internet (0.0.0.0/0) para o Internet Gateway
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.gw.id
+  }
+
   tags = {
-    Name = "subnet-public-${var.project_name}-${var.environment}-${count.index + 1}"
+    Name = "sojoga-public-rt"
+    Environment = "prod"
   }
 }
+
+# 4. Associa a nova tabela de rotas a todas as sub-redes públicas encontradas
+resource "aws_route_table_association" "public_assoc" {
+  count          = length(data.aws_subnets.public.ids)
+  subnet_id      = element(data.aws_subnets.public.ids, count.index)
+  route_table_id = aws_route_table.public_rt.id
+}
+
