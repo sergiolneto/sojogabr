@@ -19,6 +19,10 @@ jobs:
       name: producao # Aponta para o Environment do GitHub
       url: 'http://sojoga.com.br' # Opcional: URL do ambiente de produção
 
+    # Correção: Define a variável de ambiente no nível do Job para que todas as etapas a herdem.
+    env:
+      JWT_SECRET_ARN: ${{ secrets.JWT_SECRET_ARN }}
+
     defaults:
       run:
         working-directory: ./terraform
@@ -45,16 +49,13 @@ jobs:
         run: terraform workspace select -or-create prod
 
       - name: 'Find Path and Run Import Script'
-        # Correção Final: Passa o segredo JWT para o script de importação
-        env:
-          JWT_SECRET_ARN: ${{ secrets.JWT_SECRET_ARN }}
         run: |
           chmod +x ../.github/scripts/import_resources.sh
           TF_PATH=$(which terraform)
           ../.github/scripts/import_resources.sh "$TF_PATH"
 
       - name: 'Terraform Plan'
-        run: terraform plan -var="environment=prod" -var="jwt_secret_arn=${{ secrets.JWT_SECRET_ARN }}" -out=tfplan
+        run: terraform plan -var="environment=prod" -var="jwt_secret_arn=${{ env.JWT_SECRET_ARN }}" -out=tfplan
 
       - name: 'Terraform Apply'
         run: terraform apply -auto-approve tfplan
