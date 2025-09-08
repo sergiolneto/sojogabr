@@ -43,16 +43,20 @@ jobs:
         run: terraform workspace select prod || terraform workspace new prod
 
       - name: 'Import DynamoDB Table'
-        run: terraform import aws_dynamodb_table.user_table Usuario-prod || true
+        continue-on-error: true
+        run: terraform import aws_dynamodb_table.user_table Usuario-prod
 
       - name: 'Import ECR Repository'
-        run: terraform import aws_ecr_repository.sojoga_backend_repo sojoga-backend-prod || true
+        continue-on-error: true
+        run: terraform import aws_ecr_repository.sojoga_backend_repo sojoga-backend-prod
 
       - name: 'Import IAM Role'
-        run: terraform import aws_iam_role.ecs_task_execution_role ecs-task-execution-role-prod || true
+        continue-on-error: true
+        run: terraform import aws_iam_role.ecs_task_execution_role ecs-task-execution-role-prod
 
       - name: 'Import Internet Gateway'
-        run: terraform import aws_internet_gateway.gw igw-0b9a57d3570e0eb60 || true
+        continue-on-error: true
+        run: terraform import aws_internet_gateway.gw igw-0b9a57d3570e0eb60
 
       - name: 'Import Target Group'
         continue-on-error: true

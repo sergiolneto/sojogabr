@@ -1,23 +1,31 @@
 name: Deploy App to AWS PROD
 
+# Gatilho: Este workflow agora é acionado QUANDO o workflow 'Terraform Deploy PROD' termina com sucesso na branch 'main'.
 on:
-  push:
+  workflow_run:
+    workflows: ["Terraform Deploy PROD"]
+    types:
+      - completed
     branches:
-      - main     # Dispara na branch de PROD
+      - main
 
 jobs:
-  # --- JOB PARA PRODUÇÃO ---
   deploy-prod:
     name: Deploy App to Produção
-    if: github.ref == 'refs/heads/main' # Só executa se o push for na branch main
+    # Condição: Só executa o job se o workflow que o acionou (Terraform) foi concluído com sucesso.
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     environment: producao
     permissions:
       id-token: write
       contents: read
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # Faz o checkout do commit exato que disparou o workflow do Terraform, garantindo consistência.
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
