@@ -1,22 +1,29 @@
 #!/bin/bash
 
 # Este script executa a importação de recursos existentes do Terraform.
-# Ele é chamado pelo workflow terraform-deploy.yml.
 
 set -e # Encerra o script imediatamente se um comando falhar.
 set -x # Imprime cada comando antes de executá-lo para debug.
 
 echo "--- Starting resource import script ---"
 
+echo "--- DIAGNOSTICS ---"
+echo "Current user: $(whoami)"
+echo "Current PATH: $PATH"
+echo "Terraform executable location: $(which terraform)"
+echo "Checking for aliases..."
+alias
+echo "--- END DIAGNOSTICS ---"
+
 # A função de importação tenta importar um recurso.
-# Se a importação falhar (o que é esperado se o recurso não existir), ela continua sem falhar o script.
+# Usamos 'command terraform' para garantir que estamos chamando o executável real, ignorando quaisquer aliases.
 import_resource() {
   local resource_type=$1
   local resource_name=$2
   local resource_id=$3
   
-  echo "Attempting to import ${resource_type} ${resource_name}..."
-  terraform import "${resource_type}.${resource_name}" "${resource_id}" || echo "Resource ${resource_name} not found or already in state. Continuing..."
+  echo "Attempting to import ${resource_type} ${resource_name} using 'command terraform'..."
+  command terraform import "${resource_type}.${resource_name}" "${resource_id}" || echo "Resource ${resource_name} not found or already in state. Continuing..."
 }
 
 # --- Recursos a serem importados ---
