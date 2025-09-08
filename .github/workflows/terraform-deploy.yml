@@ -34,6 +34,7 @@ jobs:
           aws-region: sa-east-1 # Alinhando com a região do deploy da app
 
       - name: 'Setup Terraform'
+        id: setup-terraform # Adicionado ID para referenciar a saída
         uses: hashicorp/setup-terraform@v3
 
       - name: 'Terraform Init'
@@ -43,6 +44,9 @@ jobs:
         run: terraform workspace select prod || terraform workspace new prod
 
       - name: 'Run Import Script'
+        env:
+          # Passa o caminho absoluto do executável do Terraform para o script
+          TERRAFORM_EXEC: ${{ steps.setup-terraform.outputs.terraform_path }}
         run: |
           chmod +x ../.github/scripts/import_resources.sh
           ../.github/scripts/import_resources.sh

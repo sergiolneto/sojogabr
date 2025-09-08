@@ -7,23 +7,23 @@ set -x # Imprime cada comando antes de executá-lo para debug.
 
 echo "--- Starting resource import script ---"
 
-echo "--- DIAGNOSTICS ---"
-echo "Current user: $(whoami)"
-echo "Current PATH: $PATH"
-echo "Terraform executable location: $(which terraform)"
-echo "Checking for aliases..."
-alias
-echo "--- END DIAGNOSTICS ---"
+# Verifica se a variável de ambiente com o caminho do executável foi passada
+if [ -z "$TERRAFORM_EXEC" ]; then
+  echo "Error: TERRAFORM_EXEC environment variable is not set." >&2
+  exit 1
+fi
+
+echo "Terraform executable is located at: $TERRAFORM_EXEC"
 
 # A função de importação tenta importar um recurso.
-# Usamos 'command terraform' para garantir que estamos chamando o executável real, ignorando quaisquer aliases.
+# Usamos a variável $TERRAFORM_EXEC para chamar o executável pelo seu caminho absoluto.
 import_resource() {
   local resource_type=$1
   local resource_name=$2
   local resource_id=$3
   
-  echo "Attempting to import ${resource_type} ${resource_name} using 'command terraform'..."
-  command terraform import "${resource_type}.${resource_name}" "${resource_id}" || echo "Resource ${resource_name} not found or already in state. Continuing..."
+  echo "Attempting to import ${resource_type} ${resource_name} using absolute path..."
+  "$TERRAFORM_EXEC" import "${resource_type}.${resource_name}" "${resource_id}" || echo "Resource ${resource_name} not found or already in state. Continuing..."
 }
 
 # --- Recursos a serem importados ---
