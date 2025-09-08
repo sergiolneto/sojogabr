@@ -15,7 +15,7 @@ jobs:
       id-token: write
       contents: read
     runs-on: ubuntu-latest
-    environment: 
+    environment:
       name: producao # Aponta para o Environment do GitHub
       url: 'http://sojoga.com.br' # Opcional: URL do ambiente de produção
 
