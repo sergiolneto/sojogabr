@@ -41,7 +41,7 @@ jobs:
         run: terraform init
 
       - name: 'Terraform Workspace'
-        run: terraform workspace select prod || terraform workspace new prod
+        run: terraform workspace select -or-create prod
 
       - name: 'Run Import Script'
         env:
