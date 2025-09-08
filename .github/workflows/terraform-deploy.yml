@@ -15,7 +15,7 @@ jobs:
       id-token: write
       contents: read
     runs-on: ubuntu-latest
-    environment:
+    environment: 
       name: producao # Aponta para o Environment do GitHub
       url: 'http://sojoga.com.br' # Opcional: URL do ambiente de produção
 
@@ -34,12 +34,7 @@ jobs:
           aws-region: sa-east-1 # Alinhando com a região do deploy da app
 
       - name: 'Setup Terraform'
-        id: setup-terraform
         uses: hashicorp/setup-terraform@v3
-
-      - name: 'Set Terraform Path as Env Var'
-        # A maneira mais robusta de passar variáveis entre etapas.
-        run: echo "TF_EXEC_PATH=${{ steps.setup-terraform.outputs.terraform_path }}" >> $GITHUB_ENV
 
       - name: 'Terraform Init'
         run: terraform init
@@ -47,11 +42,12 @@ jobs:
       - name: 'Terraform Workspace'
         run: terraform workspace select -or-create prod
 
-      - name: 'Run Import Script'
-        # O script agora usará a variável de ambiente $TF_EXEC_PATH, que foi definida de forma confiável na etapa anterior.
+      - name: 'Find Path and Run Import Script'
+        # Solução Final: Encontra o caminho do terraform e o passa como argumento na mesma etapa para evitar bugs de contexto.
         run: |
           chmod +x ../.github/scripts/import_resources.sh
-          ../.github/scripts/import_resources.sh "$TF_EXEC_PATH"
+          TF_PATH=$(which terraform)
+          ../.github/scripts/import_resources.sh "$TF_PATH"
 
       - name: 'Terraform Plan'
         run: terraform plan -var="environment=prod" -var="jwt_secret_arn=${{ secrets.JWT_SECRET_ARN }}" -out=tfplan
