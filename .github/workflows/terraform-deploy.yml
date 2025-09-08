@@ -44,12 +44,10 @@ jobs:
         run: terraform workspace select -or-create prod
 
       - name: 'Run Import Script'
-        env:
-          # Passa o caminho absoluto do executável do Terraform para o script
-          TERRAFORM_EXEC: ${{ steps.setup-terraform.outputs.terraform_path }}
+        # Correção Final: Passa o caminho do executável como um argumento de linha de comando para o script.
         run: |
           chmod +x ../.github/scripts/import_resources.sh
-          ../.github/scripts/import_resources.sh
+          ../.github/scripts/import_resources.sh ${{ steps.setup-terraform.outputs.terraform_path }}
 
       - name: 'Terraform Plan'
         run: terraform plan -var="environment=prod" -var="jwt_secret_arn=${{ secrets.JWT_SECRET_ARN }}" -out=tfplan
