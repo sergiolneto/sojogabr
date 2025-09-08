@@ -36,8 +36,7 @@ jobs:
       - name: 'Setup Terraform'
         uses: hashicorp/setup-terraform@v3
         with:
-          # Solução Final: Desativa o script de wrapper defeituoso.
-          terraform_wrapper: false
+          terraform_wrapper: false # Garante que estamos usando o binário real
 
       - name: 'Terraform Init'
         run: terraform init
@@ -46,7 +45,9 @@ jobs:
         run: terraform workspace select -or-create prod
 
       - name: 'Find Path and Run Import Script'
-        # Agora que o wrapper está desativado, este script deve funcionar com o binário real.
+        # Correção Final: Passa o segredo JWT para o script de importação
+        env:
+          JWT_SECRET_ARN: ${{ secrets.JWT_SECRET_ARN }}
         run: |
           chmod +x ../.github/scripts/import_resources.sh
           TF_PATH=$(which terraform)
