@@ -38,17 +38,17 @@ resource "aws_lb_target_group" "main" {
   vpc_id      = data.aws_vpc.main.id # Correção: usa o data source da VPC
   target_type = "ip"
   
-  # Correção de Health Check para ser mais permissivo durante a depuração
+  # Health Check final e correto para Spring Boot
   health_check {
     enabled             = true
     interval            = 30
-    path                = "/" # Verifica a raiz da aplicação, que sempre deve responder.
+    path                = "/actuator/health" # O endpoint padrão e correto do Spring Boot Actuator
     port                = "traffic-port"
     protocol            = "HTTP"
     timeout             = 5
-    healthy_threshold   = 2 # Considera saudável após 2 sucessos
+    healthy_threshold   = 2
     unhealthy_threshold = 2
-    matcher             = "200-399" # Considera saudável qualquer resposta de sucesso ou redirecionamento.
+    matcher             = "200" # O endpoint /actuator/health retorna 200 OK
   }
 }
 
