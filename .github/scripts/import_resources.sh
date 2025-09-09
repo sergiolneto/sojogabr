@@ -71,12 +71,17 @@ if [ -n "$LB_ARN" ] && [ "$LB_ARN" != "None" ]; then
   import_resource "aws_lb" "main" "$LB_ARN"
 fi
 
-# Para o Serviço ECS (A ÚLTIMA PEÇA DO IMPORT!)
+# Para o Cluster ECS (DEVE VIR ANTES DO SERVIÇO!)
+echo "Attempting to import ECS Cluster..."
+CLUSTER_ARN=$(aws ecs describe-clusters --clusters sojoga-cluster-prod --region sa-east-1 --query "clusters[0].clusterArn" --output text | tr -d '\r')
+if [ -n "$CLUSTER_ARN" ] && [ "$CLUSTER_ARN" != "None" ]; then
+  import_resource "aws_ecs_cluster" "sojoga_cluster" "$CLUSTER_ARN"
+fi
+
+# Para o Serviço ECS
 echo "Attempting to import ECS Service..."
 SERVICE_ARN=$(aws ecs describe-services --cluster sojoga-cluster-prod --services sojoga-backend-prod-service --region sa-east-1 --query "services[0].serviceArn" --output text | tr -d '\r')
 if [ -n "$SERVICE_ARN" ] && [ "$SERVICE_ARN" != "None" ]; then
-  # O ID para importar um serviço ECS é o ARN do cluster e o ARN do serviço, separados por uma vírgula
-  CLUSTER_ARN=$(aws ecs describe-clusters --clusters sojoga-cluster-prod --region sa-east-1 --query "clusters[0].clusterArn" --output text | tr -d '\r')
   import_resource "aws_ecs_service" "main" "$CLUSTER_ARN,$SERVICE_ARN"
 fi
 
