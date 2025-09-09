@@ -28,7 +28,6 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_attachment" {
 
 # --- Permissão para Ler o Segredo JWT ---
 
-# Define a política de permissão para acessar o segredo JWT.
 data "aws_iam_policy_document" "jwt_secret_access_policy" {
   statement {
     actions   = ["secretsmanager:GetSecretValue"]
@@ -36,15 +35,47 @@ data "aws_iam_policy_document" "jwt_secret_access_policy" {
   }
 }
 
-# Cria a política do IAM com base no documento acima.
 resource "aws_iam_policy" "jwt_secret_access" {
   name        = "jwt-secret-access-policy-${var.environment}"
   description = "Allows ECS tasks to retrieve the JWT secret from Secrets Manager"
   policy      = data.aws_iam_policy_document.jwt_secret_access_policy.json
 }
 
-# Anexa a nova política de acesso ao segredo à nossa role de execução da tarefa.
 resource "aws_iam_role_policy_attachment" "jwt_secret_attachment" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = aws_iam_policy.jwt_secret_access.arn
+}
+
+# --- Permissão para Acessar o DynamoDB ---
+
+data "aws_iam_policy_document" "dynamodb_access_policy" {
+  statement {
+    actions = [
+      "dynamodb:BatchGetItem",
+      "dynamodb:BatchWriteItem",
+      "dynamodb:ConditionCheckItem",
+      "dynamodb:PutItem",
+      "dynamodb:DeleteItem",
+      "dynamodb:GetItem",
+      "dynamodb:Scan",
+      "dynamodb:Query",
+      "dynamodb:UpdateItem"
+    ]
+    # Permite acesso total às duas tabelas da aplicação.
+    resources = [
+      aws_dynamodb_table.user_table.arn,
+      aws_dynamodb_table.campeonato_table.arn
+    ]
+  }
+}
+
+resource "aws_iam_policy" "dynamodb_access" {
+  name        = "dynamodb-access-policy-${var.environment}"
+  description = "Allows ECS tasks to access the DynamoDB tables"
+  policy      = data.aws_iam_policy_document.dynamodb_access_policy.json
+}
+
+resource "aws_iam_role_policy_attachment" "dynamodb_access_attachment" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = aws_iam_policy.dynamodb_access.arn
 }
