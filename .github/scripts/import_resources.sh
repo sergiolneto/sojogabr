@@ -31,6 +31,19 @@ import_resource() {
     "${resource_type}.${resource_name}" "${resource_id}" || echo "Resource ${resource_name} not found or already in state. Continuing..."
 }
 
+# Função para importar políticas do IAM, que constrói o ARN a partir do ID da conta.
+import_iam_policy() {
+  local resource_name=$1
+  local policy_name=$2
+
+  echo "Attempting to find AWS Account ID to import IAM Policy ${policy_name}..."
+  ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text | tr -d '\r')
+  POLICY_ARN="arn:aws:iam::${ACCOUNT_ID}:policy/${policy_name}"
+
+  echo "Constructed IAM Policy ARN: ${POLICY_ARN}"
+  import_resource "aws_iam_policy" "${resource_name}" "${POLICY_ARN}"
+}
+
 # Função específica para importar Security Groups, que busca o ID pelo nome.
 import_sg() {
   local resource_name=$1
@@ -57,6 +70,10 @@ import_resource "aws_iam_role" "ecs_task_execution_role" "ecs-task-execution-rol
 import_sg "lb_sg" "lb-sg-sojoga-br-prod"
 import_sg "ecs_service_sg" "ecs-service-sg-sojoga-br-prod"
 
+# Importa as políticas do IAM pelo nome
+import_iam_policy "jwt_secret_access" "jwt-secret-access-policy-prod"
+import_iam_policy "dynamodb_access" "dynamodb-access-policy-prod"
+
 # Para o Target Group
 echo "Attempting to import Target Group..."
 TG_ARN=$(aws elbv2 describe-target-groups --names tg-sojoga-br-prod --region sa-east-1 --query "TargetGroups[0].TargetGroupArn" --output text | tr -d '\r')
@@ -71,7 +88,7 @@ if [ -n "$LB_ARN" ] && [ "$LB_ARN" != "None" ]; then
   import_resource "aws_lb" "main" "$LB_ARN"
 fi
 
-# Para o Cluster ECS (DEVE VIR ANTES DO SERVIÇO!)
+# Para o Cluster ECS
 echo "Attempting to import ECS Cluster..."
 CLUSTER_ARN=$(aws ecs describe-clusters --clusters sojoga-cluster-prod --region sa-east-1 --query "clusters[0].clusterArn" --output text | tr -d '\r')
 if [ -n "$CLUSTER_ARN" ] && [ "$CLUSTER_ARN" != "None" ]; then
