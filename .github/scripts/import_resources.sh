@@ -55,6 +55,7 @@ import_resource "aws_ecr_repository" "sojoga_backend_repo" "sojoga-backend-prod"
 import_resource "aws_iam_role" "ecs_task_execution_role" "ecs-task-execution-role-prod"
 import_resource "aws_internet_gateway" "gw" "igw-00166dd7965f5b44e"
 
+
 import_sg "lb_sg" "lb-sg-sojoga-br-prod"
 import_sg "ecs_service_sg" "ecs-service-sg-sojoga-br-prod"
 
