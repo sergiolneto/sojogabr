@@ -50,24 +50,26 @@ import_sg() {
 # --- Recursos a serem importados ---
 
 import_resource "aws_dynamodb_table" "user_table" "Usuario-prod"
-import_resource "aws_dynamodb_table" "campeonato_table" "SojogaBrTable-prod" # Adicionado
+import_resource "aws_dynamodb_table" "campeonato_table" "SojogaBrTable-prod"
 import_resource "aws_ecr_repository" "sojoga_backend_repo" "sojoga-backend-prod"
 import_resource "aws_iam_role" "ecs_task_execution_role" "ecs-task-execution-role-prod"
 import_resource "aws_internet_gateway" "gw" "igw-00166dd7965f5b44e"
 
-
 import_sg "lb_sg" "lb-sg-sojoga-br-prod"
 import_sg "ecs_service_sg" "ecs-service-sg-sojoga-br-prod"
 
-# Para o Target Group, precisamos buscar o ARN primeiro.
+# Para o Target Group
 echo "Attempting to import Target Group..."
 TG_ARN=$(aws elbv2 describe-target-groups --names tg-sojoga-br-prod --region sa-east-1 --query "TargetGroups[0].TargetGroupArn" --output text | tr -d '\r')
-
 if [ -n "$TG_ARN" ] && [ "$TG_ARN" != "None" ]; then
-  echo "Found Target Group ARN: $TG_ARN"
   import_resource "aws_lb_target_group" "main" "$TG_ARN"
-else
-  echo "Target Group 'tg-sojoga-br-prod' not found, skipping import."
+fi
+
+# Para o Load Balancer (A ÚLTIMA PEÇA!)
+echo "Attempting to import Load Balancer..."
+LB_ARN=$(aws elbv2 describe-load-balancers --names alb-sojoga-br-prod --region sa-east-1 --query "LoadBalancers[0].LoadBalancerArn" --output text | tr -d '\r')
+if [ -n "$LB_ARN" ] && [ "$LB_ARN" != "None" ]; then
+  import_resource "aws_lb" "main" "$LB_ARN"
 fi
 
 echo "--- Resource import script finished ---"
