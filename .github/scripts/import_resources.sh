@@ -50,23 +50,34 @@ import_sg() {
 # --- Recursos a serem importados ---
 
 import_resource "aws_dynamodb_table" "user_table" "Usuario-prod"
+import_resource "aws_dynamodb_table" "campeonato_table" "SojogaBrTable-prod"
 import_resource "aws_ecr_repository" "sojoga_backend_repo" "sojoga-backend-prod"
 import_resource "aws_iam_role" "ecs_task_execution_role" "ecs-task-execution-role-prod"
-import_resource "aws_internet_gateway" "gw" "igw-00166dd7965f5b44e"
 
-# Correção: Usa a função import_sg para importar os security groups pelo nome.
 import_sg "lb_sg" "lb-sg-sojoga-br-prod"
 import_sg "ecs_service_sg" "ecs-service-sg-sojoga-br-prod"
 
-# Para o Target Group, precisamos buscar o ARN primeiro.
+# Para o Target Group
 echo "Attempting to import Target Group..."
 TG_ARN=$(aws elbv2 describe-target-groups --names tg-sojoga-br-prod --region sa-east-1 --query "TargetGroups[0].TargetGroupArn" --output text | tr -d '\r')
-
 if [ -n "$TG_ARN" ] && [ "$TG_ARN" != "None" ]; then
-  echo "Found Target Group ARN: $TG_ARN"
   import_resource "aws_lb_target_group" "main" "$TG_ARN"
-else
-  echo "Target Group 'tg-sojoga-br-prod' not found, skipping import."
+fi
+
+# Para o Load Balancer
+echo "Attempting to import Load Balancer..."
+LB_ARN=$(aws elbv2 describe-load-balancers --names alb-sojoga-br-prod --region sa-east-1 --query "LoadBalancers[0].LoadBalancerArn" --output text | tr -d '\r')
+if [ -n "$LB_ARN" ] && [ "$LB_ARN" != "None" ]; then
+  import_resource "aws_lb" "main" "$LB_ARN"
+fi
+
+# Para o Serviço ECS (A ÚLTIMA PEÇA DO IMPORT!)
+echo "Attempting to import ECS Service..."
+SERVICE_ARN=$(aws ecs describe-services --cluster sojoga-cluster-prod --services sojoga-backend-prod-service --region sa-east-1 --query "services[0].serviceArn" --output text | tr -d '\r')
+if [ -n "$SERVICE_ARN" ] && [ "$SERVICE_ARN" != "None" ]; then
+  # O ID para importar um serviço ECS é o ARN do cluster e o ARN do serviço, separados por uma vírgula
+  CLUSTER_ARN=$(aws ecs describe-clusters --clusters sojoga-cluster-prod --region sa-east-1 --query "clusters[0].clusterArn" --output text | tr -d '\r')
+  import_resource "aws_ecs_service" "main" "$CLUSTER_ARN,$SERVICE_ARN"
 fi
 
 echo "--- Resource import script finished ---"
