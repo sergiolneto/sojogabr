@@ -50,11 +50,12 @@ import_sg() {
 # --- Recursos a serem importados ---
 
 import_resource "aws_dynamodb_table" "user_table" "Usuario-prod"
+import_resource "aws_dynamodb_table" "campeonato_table" "SojogaBrTable-prod" # Adicionado
 import_resource "aws_ecr_repository" "sojoga_backend_repo" "sojoga-backend-prod"
 import_resource "aws_iam_role" "ecs_task_execution_role" "ecs-task-execution-role-prod"
 import_resource "aws_internet_gateway" "gw" "igw-00166dd7965f5b44e"
 
-# Correção: Usa a função import_sg para importar os security groups pelo nome.
+
 import_sg "lb_sg" "lb-sg-sojoga-br-prod"
 import_sg "ecs_service_sg" "ecs-service-sg-sojoga-br-prod"
 
