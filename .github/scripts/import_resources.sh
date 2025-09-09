@@ -7,31 +7,56 @@ set -x # Imprime cada comando antes de executá-lo para debug.
 
 echo "--- Starting resource import script ---"
 
-echo "--- DIAGNOSTICS ---"
-echo "Current user: $(whoami)"
-echo "Current PATH: $PATH"
-echo "Terraform executable location: $(which terraform)"
-echo "Checking for aliases..."
-alias
-echo "--- END DIAGNOSTICS ---"
+# O caminho para o executável do Terraform é passado como o primeiro argumento ($1)
+TERRAFORM_EXEC_PATH=$1
 
-# A função de importação tenta importar um recurso.
-# Usamos 'command terraform' para garantir que estamos chamando o executável real, ignorando quaisquer aliases.
+# Verifica se o argumento foi passado
+if [ -z "$TERRAFORM_EXEC_PATH" ]; then
+  echo "Error: Path to terraform executable was not provided as an argument." >&2
+  exit 1
+fi
+
+echo "Terraform executable is located at: $TERRAFORM_EXEC_PATH"
+
+# Função genérica de importação
 import_resource() {
   local resource_type=$1
   local resource_name=$2
   local resource_id=$3
   
-  echo "Attempting to import ${resource_type} ${resource_name} using 'command terraform'..."
-  command terraform import "${resource_type}.${resource_name}" "${resource_id}" || echo "Resource ${resource_name} not found or already in state. Continuing..."
+  echo "Attempting to import ${resource_type} ${resource_name}..."
+  "$TERRAFORM_EXEC_PATH" import \
+    -var="environment=prod" \
+    -var="jwt_secret_arn=${JWT_SECRET_ARN}" \
+    "${resource_type}.${resource_name}" "${resource_id}" || echo "Resource ${resource_name} not found or already in state. Continuing..."
+}
+
+# Função específica para importar Security Groups, que busca o ID pelo nome.
+import_sg() {
+  local resource_name=$1
+  local sg_name=$2
+
+  echo "Attempting to find Security Group ID for name: ${sg_name}"
+  SG_ID=$(aws ec2 describe-security-groups --filters "Name=group-name,Values=${sg_name}" --query "SecurityGroups[0].GroupId" --output text | tr -d '\r')
+
+  if [ -n "$SG_ID" ] && [ "$SG_ID" != "None" ]; then
+    echo "Found Security Group ID: $SG_ID"
+    import_resource "aws_security_group" "${resource_name}" "${SG_ID}"
+  else
+    echo "Security Group '${sg_name}' not found, skipping import."
+  fi
 }
 
 # --- Recursos a serem importados ---
 
 import_resource "aws_dynamodb_table" "user_table" "Usuario-prod"
+import_resource "aws_dynamodb_table" "campeonato_table" "SojogaBrTable-prod" # Adicionado
 import_resource "aws_ecr_repository" "sojoga_backend_repo" "sojoga-backend-prod"
 import_resource "aws_iam_role" "ecs_task_execution_role" "ecs-task-execution-role-prod"
-import_resource "aws_internet_gateway" "gw" "igw-0b9a57d3570e0eb60"
+import_resource "aws_internet_gateway" "gw" "igw-00166dd7965f5b44e"
+
+import_sg "lb_sg" "lb-sg-sojoga-br-prod"
+import_sg "ecs_service_sg" "ecs-service-sg-sojoga-br-prod"
 
 # Para o Target Group, precisamos buscar o ARN primeiro.
 echo "Attempting to import Target Group..."
