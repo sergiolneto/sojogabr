@@ -1,9 +1,8 @@
 # terraform/iam.tf
 
-# --- Role para a Execução da Tarefa ECS ---
-
-# Define a relação de confiança: permite que o serviço ECS assuma esta role.
-data "aws_iam_policy_document" "ecs_task_execution_policy" {
+# --- Role para a EXECUÇÃO da Tarefa (Crachá do Entregador) ---
+# Permite ao ECS puxar imagens e segredos.
+data "aws_iam_policy_document" "ecs_task_assume_role_policy" {
   statement {
     actions = ["sts:AssumeRole"]
     principals {
@@ -13,55 +12,48 @@ data "aws_iam_policy_document" "ecs_task_execution_policy" {
   }
 }
 
-# Cria a role que a tarefa ECS usará para interagir com outros serviços da AWS.
 resource "aws_iam_role" "ecs_task_execution_role" {
   name               = "ecs-task-execution-role-${var.environment}"
-  assume_role_policy = data.aws_iam_policy_document.ecs_task_execution_policy.json
+  assume_role_policy = data.aws_iam_policy_document.ecs_task_assume_role_policy.json
 }
 
-# Anexa a política gerenciada pela AWS que dá as permissões básicas (puxar imagem do ECR, etc.).
 resource "aws_iam_role_policy_attachment" "ecs_task_execution_attachment" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+# --- Role para a TAREFA em si (Crachá do Funcionário) ---
+# Permite que a APLICAÇÃO acesse outros serviços da AWS.
+resource "aws_iam_role" "ecs_task_role" {
+  name               = "ecs-task-role-${var.environment}"
+  assume_role_policy = data.aws_iam_policy_document.ecs_task_assume_role_policy.json
+}
 
-# --- Permissão para Ler o Segredo JWT ---
+# --- Políticas de Permissão ---
 
+# Política para ler o segredo JWT
 data "aws_iam_policy_document" "jwt_secret_access_policy" {
   statement {
     actions   = ["secretsmanager:GetSecretValue"]
-    resources = [var.jwt_secret_arn] # Permite acesso APENAS ao segredo específico.
+    resources = [var.jwt_secret_arn]
   }
 }
 
 resource "aws_iam_policy" "jwt_secret_access" {
-  name        = "jwt-secret-access-policy-${var.environment}"
-  description = "Allows ECS tasks to retrieve the JWT secret from Secrets Manager"
-  policy      = data.aws_iam_policy_document.jwt_secret_access_policy.json
+  name   = "jwt-secret-access-policy-${var.environment}"
+  policy = data.aws_iam_policy_document.jwt_secret_access_policy.json
 }
 
+# Anexa a permissão de ler segredo à ROLE DE EXECUÇÃO (para o entregador)
 resource "aws_iam_role_policy_attachment" "jwt_secret_attachment" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = aws_iam_policy.jwt_secret_access.arn
 }
 
-# --- Permissão para Acessar o DynamoDB ---
-
+# Política para acessar o DynamoDB
 data "aws_iam_policy_document" "dynamodb_access_policy" {
   statement {
-    actions = [
-      "dynamodb:BatchGetItem",
-      "dynamodb:BatchWriteItem",
-      "dynamodb:ConditionCheckItem",
-      "dynamodb:PutItem",
-      "dynamodb:DeleteItem",
-      "dynamodb:GetItem",
-      "dynamodb:Scan",
-      "dynamodb:Query",
-      "dynamodb:UpdateItem"
-    ]
-    # Permite acesso total às duas tabelas da aplicação.
+    actions = ["dynamodb:*"] # Simplificado para garantir o acesso
     resources = [
       aws_dynamodb_table.user_table.arn,
       aws_dynamodb_table.campeonato_table.arn
@@ -70,12 +62,12 @@ data "aws_iam_policy_document" "dynamodb_access_policy" {
 }
 
 resource "aws_iam_policy" "dynamodb_access" {
-  name        = "dynamodb-access-policy-${var.environment}"
-  description = "Allows ECS tasks to access the DynamoDB tables"
-  policy      = data.aws_iam_policy_document.dynamodb_access_policy.json
+  name   = "dynamodb-access-policy-${var.environment}"
+  policy = data.aws_iam_policy_document.dynamodb_access_policy.json
 }
 
+# Anexa a permissão do DynamoDB à ROLE DA TAREFA (para o funcionário)
 resource "aws_iam_role_policy_attachment" "dynamodb_access_attachment" {
-  role       = aws_iam_role.ecs_task_execution_role.name
+  role       = aws_iam_role.ecs_task_role.name
   policy_arn = aws_iam_policy.dynamodb_access.arn
 }

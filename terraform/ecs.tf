@@ -27,8 +27,11 @@ resource "aws_ecs_task_definition" "sojoga_backend_task" {
   cpu                      = "256"  # 1/4 de uma vCPU
   memory                   = "512"  # 512MB de RAM
 
-  # Role que permite ao ECS puxar imagens do ECR e enviar logs
+  # Crachá do Entregador: Permite ao ECS puxar imagens e segredos.
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+
+  # Crachá do Funcionário: Permite que a APLICAÇÃO fale com outros serviços (ex: DynamoDB).
+  task_role_arn      = aws_iam_role.ecs_task_role.arn
 
   # Definição do contêiner da sua aplicação
   container_definitions = jsonencode([
@@ -57,7 +60,7 @@ resource "aws_ecs_task_definition" "sojoga_backend_task" {
         },
         {
           name  = "DYNAMODB_CAMPEONATO_TABLE_NAME",
-          value = "SojogaBrTable-${var.environment}" # Supondo que você criará esta tabela também
+          value = aws_dynamodb_table.campeonato_table.name # Corrigido para usar o recurso
         },
         {
           name = "CORS_ALLOWED_ORIGINS",
