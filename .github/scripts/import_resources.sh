@@ -65,7 +65,10 @@ import_sg() {
 import_resource "aws_dynamodb_table" "user_table" "Usuario-prod"
 import_resource "aws_dynamodb_table" "campeonato_table" "SojogaBrTable-prod"
 import_resource "aws_ecr_repository" "sojoga_backend_repo" "sojoga-backend-prod"
+
+# Importa as Roles do IAM
 import_resource "aws_iam_role" "ecs_task_execution_role" "ecs-task-execution-role-prod"
+import_resource "aws_iam_role" "ecs_task_role" "ecs-task-role-prod"
 
 import_sg "lb_sg" "lb-sg-sojoga-br-prod"
 import_sg "ecs_service_sg" "ecs-service-sg-sojoga-br-prod"
