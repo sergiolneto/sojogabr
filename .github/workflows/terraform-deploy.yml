@@ -19,7 +19,6 @@ jobs:
       name: producao # Aponta para o Environment do GitHub
       url: 'http://sojoga.com.br' # Opcional: URL do ambiente de produção
 
-    # Correção: Define a variável de ambiente no nível do Job para que todas as etapas a herdem.
     env:
       JWT_SECRET_ARN: ${{ secrets.JWT_SECRET_ARN }}
 
@@ -35,12 +34,12 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN_PROD}}
-          aws-region: sa-east-1 # Alinhando com a região do deploy da app
+          aws-region: sa-east-1
 
       - name: 'Setup Terraform'
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_wrapper: false # Garante que estamos usando o binário real
+          terraform_wrapper: false
 
       - name: 'Terraform Init'
         run: terraform init
@@ -48,11 +47,7 @@ jobs:
       - name: 'Terraform Workspace'
         run: terraform workspace select -or-create prod
 
-      - name: 'Find Path and Run Import Script'
-        run: |
-          chmod +x ../.github/scripts/import_resources.sh
-          TF_PATH=$(which terraform)
-          ../.github/scripts/import_resources.sh "$TF_PATH"
+      # A etapa de import foi removida, pois o ambiente agora está limpo.
 
       - name: 'Terraform Plan'
         run: terraform plan -var="environment=prod" -var="jwt_secret_arn=${{ env.JWT_SECRET_ARN }}" -out=tfplan
