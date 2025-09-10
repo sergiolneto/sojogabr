@@ -13,6 +13,10 @@ COPY src ./src
 # Compila o projeto e cria o pacote JAR
 RUN mvn package -DskipTests
 
+# --- ETAPA DE DEBUG ---
+# Lista o conteúdo do diretório target para verificar o nome do JAR no log do build.
+RUN ls -l /app/target
+
 # Estágio 2: Cria a imagem final com o JRE para um tamanho menor
 FROM eclipse-temurin:17-jre-alpine
 
