@@ -1,5 +1,17 @@
 # terraform/ecs.tf
 
+# --- RECURSO DE LOGS ---
+# Cria um grupo de logs no CloudWatch para armazenar os logs da nossa aplicação.
+resource "aws_cloudwatch_log_group" "sojoga_backend_logs" {
+  name              = "/ecs/sojoga-backend-${var.environment}"
+  retention_in_days = 7 # Guarda os logs por 7 dias.
+
+  tags = {
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}
+
 # 1. Repositório de Imagens Docker (ECR)
 resource "aws_ecr_repository" "sojoga_backend_repo" {
   name = "sojoga-backend-${var.environment}" # ex: sojoga-backend-prod
@@ -19,25 +31,19 @@ resource "aws_ecs_cluster" "sojoga_cluster" {
 }
 
 # 3. Definição da Tarefa ECS (O Blueprint da sua Aplicação)
-# Esta é a parte mais importante. Ela define como seu contêiner deve rodar.
 resource "aws_ecs_task_definition" "sojoga_backend_task" {
   family                   = "sojoga-backend-${var.environment}-task"
-  network_mode             = "awsvpc" # Modo de rede recomendado para Fargate
+  network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = "256"  # 1/4 de uma vCPU
-  memory                   = "512"  # 512MB de RAM
+  cpu                      = "256"
+  memory                   = "512"
 
-  # Crachá do Entregador: Permite ao ECS puxar imagens e segredos.
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
-
-  # Crachá do Funcionário: Permite que a APLICAÇÃO fale com outros serviços (ex: DynamoDB).
   task_role_arn      = aws_iam_role.ecs_task_role.arn
 
-  # Definição do contêiner da sua aplicação
   container_definitions = jsonencode([
     {
       name      = "sojoga-backend-container"
-      # A imagem será atualizada pelo pipeline de CI/CD, aqui usamos um placeholder
       image     = "${aws_ecr_repository.sojoga_backend_repo.repository_url}:latest"
       cpu       = 256
       memory    = 512
@@ -48,7 +54,15 @@ resource "aws_ecs_task_definition" "sojoga_backend_task" {
           hostPort      = 8080
         }
       ]
-      # Injetando as variáveis de ambiente na aplicação
+      # --- CONFIGURAÇÃO DE LOGS (A PEÇA QUE FALTAVA) ---
+      logConfiguration = {
+        logDriver = "awslogs",
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.sojoga_backend_logs.name,
+          "awslogs-region"        = "sa-east-1",
+          "awslogs-stream-prefix" = "ecs"
+        }
+      },
       environment = [
         {
           name  = "SPRING_PROFILES_ACTIVE",
@@ -60,17 +74,16 @@ resource "aws_ecs_task_definition" "sojoga_backend_task" {
         },
         {
           name  = "DYNAMODB_CAMPEONATO_TABLE_NAME",
-          value = aws_dynamodb_table.campeonato_table.name # Corrigido para usar o recurso
+          value = aws_dynamodb_table.campeonato_table.name
         },
         {
           name = "CORS_ALLOWED_ORIGINS",
-          value = "https://www.seu-frontend-de-producao.com.br" # IMPORTANTE: Mude para o seu domínio real
+          value = "https://www.seu-frontend-de-producao.com.br"
         }
-      ]
-      # Injetando o segredo do JWT de forma segura
+      ],
       secrets = [
         {
-          name      = "JWT_SECRET"
+          name      = "JWT_SECRET",
           valueFrom = var.jwt_secret_arn
         }
       ]
@@ -83,17 +96,17 @@ resource "aws_ecs_task_definition" "sojoga_backend_task" {
   }
 }
 
-# Grupo de segurança para o serviço ECS, permitindo tráfego vindo do Load Balancer
+# Grupo de segurança para o serviço ECS
 resource "aws_security_group" "ecs_service_sg" {
   name        = "ecs-service-sg-${var.project_name}-${var.environment}"
   description = "Allow inbound traffic from the ALB"
-  vpc_id      = data.aws_vpc.main.id # Correção: usa o data source da VPC
+  vpc_id      = data.aws_vpc.main.id
 
   ingress {
     from_port       = 8080
     to_port         = 8080
     protocol        = "tcp"
-    security_groups = [aws_security_group.lb_sg.id] # Só permite tráfego do nosso LB
+    security_groups = [aws_security_group.lb_sg.id]
   }
 
   egress {
@@ -104,16 +117,16 @@ resource "aws_security_group" "ecs_service_sg" {
   }
 }
 
-# 4. Serviço ECS (Garante que a aplicação esteja rodando)
+# 4. Serviço ECS
 resource "aws_ecs_service" "main" {
-  name            = "sojoga-backend-prod-service" # Nome fixo para o pipeline de deploy encontrar
+  name            = "sojoga-backend-prod-service"
   cluster         = aws_ecs_cluster.sojoga_cluster.id
   task_definition = aws_ecs_task_definition.sojoga_backend_task.arn
-  desired_count   = 1 # Queremos 1 instância da nossa aplicação rodando
+  desired_count   = 1
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = data.aws_subnets.public.ids # Correção: usa o data source das sub-redes
+    subnets         = data.aws_subnets.public.ids
     security_groups = [aws_security_group.ecs_service_sg.id]
     assign_public_ip = true
   }
@@ -124,6 +137,5 @@ resource "aws_ecs_service" "main" {
     container_port   = 8080
   }
 
-  # Garante que o listener do LB seja criado antes do serviço tentar se registrar
   depends_on = [aws_lb_listener.http]
 }
