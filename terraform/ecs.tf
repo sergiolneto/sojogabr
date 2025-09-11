@@ -76,7 +76,7 @@ resource "aws_ecs_task_definition" "sojoga_backend_task" {
         },
         {
           name = "CORS_ALLOWED_ORIGINS",
-          value = "https://www.seu-frontend-de-producao.com.br"
+          value = "*" # Correção: Permite todas as origens para teste
         }
       ],
       secrets = [
