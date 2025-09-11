@@ -1,7 +1,26 @@
 # terraform/ecs.tf
 
+# --- FONTES DE DADOS ---
+data "aws_cloudwatch_log_group" "existing_log_group" {
+  name = "/ecs/sojoga-backend-${var.environment}"
+}
+
+data "aws_ecr_repository" "existing_repo" {
+  name = "sojoga-backend-${var.environment}"
+}
+
+# --- LÓGICA LOCAL ---
+locals {
+  log_group_exists = try(data.aws_cloudwatch_log_group.existing_log_group.arn, null) != null
+  log_group_name   = local.log_group_exists ? data.aws_cloudwatch_log_group.existing_log_group.name : aws_cloudwatch_log_group.sojoga_backend_logs[0].name
+
+  repo_exists = try(data.aws_ecr_repository.existing_repo.arn, null) != null
+  repo_url    = local.repo_exists ? data.aws_ecr_repository.existing_repo.repository_url : aws_ecr_repository.sojoga_backend_repo[0].repository_url
+}
+
 # --- RECURSO DE LOGS ---
 resource "aws_cloudwatch_log_group" "sojoga_backend_logs" {
+  count             = local.log_group_exists ? 0 : 1
   name              = "/ecs/sojoga-backend-${var.environment}"
   retention_in_days = 7
 
@@ -13,7 +32,8 @@ resource "aws_cloudwatch_log_group" "sojoga_backend_logs" {
 
 # 1. Repositório de Imagens Docker (ECR)
 resource "aws_ecr_repository" "sojoga_backend_repo" {
-  name = "sojoga-backend-${var.environment}"
+  count = local.repo_exists ? 0 : 1
+  name  = "sojoga-backend-${var.environment}"
   tags = {
     Project     = var.project_name
     Environment = var.environment
@@ -43,20 +63,20 @@ resource "aws_ecs_task_definition" "sojoga_backend_task" {
   container_definitions = jsonencode([
     {
       name      = "sojoga-backend-container"
-      image     = "${aws_ecr_repository.sojoga_backend_repo.repository_url}:latest"
+      image     = "${local.repo_url}:latest" # Correção
       cpu       = 256
       memory    = 512
       essential = true
       portMappings = [
         {
-          containerPort = 8787
+          containerPort = 8787,
           hostPort      = 8787
         }
       ]
       logConfiguration = {
         logDriver = "awslogs",
         options = {
-          "awslogs-group"         = aws_cloudwatch_log_group.sojoga_backend_logs.name,
+          "awslogs-group"         = local.log_group_name,
           "awslogs-region"        = "sa-east-1",
           "awslogs-stream-prefix" = "ecs"
         }
@@ -68,11 +88,11 @@ resource "aws_ecs_task_definition" "sojoga_backend_task" {
         },
         {
           name  = "DYNAMODB_USER_TABLE_NAME",
-          value = aws_dynamodb_table.user_table.name
+          value = local.user_table_name # Correção
         },
         {
           name  = "DYNAMODB_CAMPEONATO_TABLE_NAME",
-          value = aws_dynamodb_table.campeonato_table.name
+          value = local.campeonato_table_name # Correção
         },
         {
           name = "CORS_ALLOWED_ORIGINS",
