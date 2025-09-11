@@ -17,8 +17,6 @@ if [ -z "$TERRAFORM_EXEC_PATH" ]; then
 fi
 
 echo "Terraform executable is located at: $TERRAFORM_EXEC_PATH"
-echo "::notice::Using Terraform at: $TERRAFORM_EXEC_PATH"
-echo "::debug::JWT_SECRET_ARN = $JWT_SECRET_ARN"
 
 # Função genérica de importação
 import_resource() {

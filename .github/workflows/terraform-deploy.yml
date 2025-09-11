@@ -47,7 +47,7 @@ jobs:
       - name: 'Terraform Workspace'
         run: terraform workspace select -or-create prod
 
-      - name: 'Find Path and Run Import Script'
+      - name: 'Run Import Script'
         run: |
           chmod +x ../.github/scripts/import_resources.sh
           TF_PATH=$(which terraform)
@@ -57,11 +57,4 @@ jobs:
         run: terraform plan -var="environment=prod" -var="jwt_secret_arn=${{ env.JWT_SECRET_ARN }}" -out=tfplan
 
       - name: 'Terraform Apply'
-        run: |
-          echo "::group::Pre-Apply Debug"
-          echo "JWT Secret ARN: ${{ env.JWT_SECRET_ARN }}"
-          echo "Environment: prod"
-          echo "::endgroup::"
-          terraform apply -auto-approve tfplan
-          echo "::notice::JAR Path being used: $JAR_PATH"
-          echo "::notice::Terraform apply completed - ECS resources created"
+        run: terraform apply -auto-approve tfplan
