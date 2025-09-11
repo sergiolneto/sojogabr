@@ -98,7 +98,7 @@ resource "aws_ecs_task_definition" "sojoga_backend_task" {
 resource "aws_security_group" "ecs_service_sg" {
   name        = "ecs-service-sg-${var.project_name}-${var.environment}"
   description = "Allow inbound traffic from the ALB"
-  vpc_id      = aws_vpc.main.id # Correção: usa o recurso VPC criado
+  vpc_id      = local.vpc_id # Correção: usa a variável local com o ID da VPC
 
   ingress {
     from_port       = 8080
@@ -124,7 +124,7 @@ resource "aws_ecs_service" "main" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = aws_subnet.public[*].id # Correção: usa o recurso de sub-redes criado
+    subnets         = local.subnet_ids # Correção: usa a variável local com os IDs das sub-redes
     security_groups = [aws_security_group.ecs_service_sg.id]
     assign_public_ip = true
   }
