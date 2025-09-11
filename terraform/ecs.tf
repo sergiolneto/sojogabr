@@ -1,7 +1,19 @@
 # terraform/ecs.tf
 
+# --- FONTES DE DADOS ---
+data "aws_cloudwatch_log_group" "existing_log_group" {
+  name = "/ecs/sojoga-backend-${var.environment}"
+}
+
+# --- LÓGICA LOCAL ---
+locals {
+  log_group_exists = data.aws_cloudwatch_log_group.existing_log_group.arn != null
+  log_group_name   = local.log_group_exists ? data.aws_cloudwatch_log_group.existing_log_group.name : aws_cloudwatch_log_group.sojoga_backend_logs[0].name
+}
+
 # --- RECURSO DE LOGS ---
 resource "aws_cloudwatch_log_group" "sojoga_backend_logs" {
+  count             = local.log_group_exists ? 0 : 1
   name              = "/ecs/sojoga-backend-${var.environment}"
   retention_in_days = 7
 
@@ -56,7 +68,7 @@ resource "aws_ecs_task_definition" "sojoga_backend_task" {
       logConfiguration = {
         logDriver = "awslogs",
         options = {
-          "awslogs-group"         = aws_cloudwatch_log_group.sojoga_backend_logs.name,
+          "awslogs-group"         = local.log_group_name, # Correção
           "awslogs-region"        = "sa-east-1",
           "awslogs-stream-prefix" = "ecs"
         }
