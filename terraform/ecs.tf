@@ -61,8 +61,8 @@ resource "aws_ecs_task_definition" "sojoga_backend_task" {
       essential = true
       portMappings = [
         {
-          containerPort = 8080
-          hostPort      = 8080
+          containerPort = 8787, # Correção da porta
+          hostPort      = 8787  # Correção da porta
         }
       ]
       logConfiguration = {
@@ -113,8 +113,8 @@ resource "aws_security_group" "ecs_service_sg" {
   vpc_id      = local.vpc_id # Correção: usa a variável local com o ID da VPC
 
   ingress {
-    from_port       = 8080
-    to_port         = 8080
+    from_port       = 8787 # Correção da porta
+    to_port         = 8787 # Correção da porta
     protocol        = "tcp"
     security_groups = [aws_security_group.lb_sg.id]
   }
@@ -144,7 +144,7 @@ resource "aws_ecs_service" "main" {
   load_balancer {
     target_group_arn = aws_lb_target_group.main.arn
     container_name   = "sojoga-backend-container"
-    container_port   = 8080
+    container_port   = 8787 # Correção da porta
   }
 
   depends_on = [aws_lb_listener.http]

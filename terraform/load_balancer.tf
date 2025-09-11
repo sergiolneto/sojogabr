@@ -33,7 +33,7 @@ resource "aws_lb" "main" {
 # Cria um Target Group, que é o grupo de alvos (nossas tarefas ECS) para o ALB
 resource "aws_lb_target_group" "main" {
   name        = "tg-${var.project_name}-${var.environment}"
-  port        = 8080
+  port        = 8787 # Correção da porta
   protocol    = "HTTP"
   vpc_id      = local.vpc_id # Correção: usa a variável local com o ID da VPC
   target_type = "ip"
