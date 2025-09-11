@@ -107,7 +107,7 @@ jobs:
         run: terraform init
 
       - name: 'Terraform Workspace'
-        run: terraform workspace select prod
+        run: terraform workspace select -or-create prod
 
       - name: 'Terraform Destroy'
         run: terraform destroy -auto-approve -var="environment=prod" -var="jwt_secret_arn=${{ env.JWT_SECRET_ARN }}"
