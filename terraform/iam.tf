@@ -55,8 +55,8 @@ data "aws_iam_policy_document" "dynamodb_access_policy" {
   statement {
     actions = ["dynamodb:*"] # Simplificado para garantir o acesso
     resources = [
-      local.user_table_arn,
-      local.campeonato_table_arn
+      aws_dynamodb_table.user_table.arn,
+      aws_dynamodb_table.campeonato_table.arn
     ]
   }
 }
