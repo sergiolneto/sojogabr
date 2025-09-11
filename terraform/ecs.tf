@@ -1,10 +1,9 @@
 # terraform/ecs.tf
 
 # --- RECURSO DE LOGS ---
-# Cria um grupo de logs no CloudWatch para armazenar os logs da nossa aplicação.
 resource "aws_cloudwatch_log_group" "sojoga_backend_logs" {
   name              = "/ecs/sojoga-backend-${var.environment}"
-  retention_in_days = 7 # Guarda os logs por 7 dias.
+  retention_in_days = 7
 
   tags = {
     Project     = var.project_name
@@ -14,7 +13,7 @@ resource "aws_cloudwatch_log_group" "sojoga_backend_logs" {
 
 # 1. Repositório de Imagens Docker (ECR)
 resource "aws_ecr_repository" "sojoga_backend_repo" {
-  name = "sojoga-backend-${var.environment}" # ex: sojoga-backend-prod
+  name = "sojoga-backend-${var.environment}"
   tags = {
     Project     = var.project_name
     Environment = var.environment
@@ -23,14 +22,14 @@ resource "aws_ecr_repository" "sojoga_backend_repo" {
 
 # 2. Cluster ECS
 resource "aws_ecs_cluster" "sojoga_cluster" {
-  name = "sojoga-cluster-${var.environment}" # ex: sojoga-cluster-prod
+  name = "sojoga-cluster-${var.environment}"
   tags = {
     Project     = var.project_name
     Environment = var.environment
   }
 }
 
-# 3. Definição da Tarefa ECS (O Blueprint da sua Aplicação)
+# 3. Definição da Tarefa ECS
 resource "aws_ecs_task_definition" "sojoga_backend_task" {
   family                   = "sojoga-backend-${var.environment}-task"
   network_mode             = "awsvpc"
@@ -54,7 +53,6 @@ resource "aws_ecs_task_definition" "sojoga_backend_task" {
           hostPort      = 8080
         }
       ]
-      # --- CONFIGURAÇÃO DE LOGS (A PEÇA QUE FALTAVA) ---
       logConfiguration = {
         logDriver = "awslogs",
         options = {
@@ -100,7 +98,7 @@ resource "aws_ecs_task_definition" "sojoga_backend_task" {
 resource "aws_security_group" "ecs_service_sg" {
   name        = "ecs-service-sg-${var.project_name}-${var.environment}"
   description = "Allow inbound traffic from the ALB"
-  vpc_id      = data.aws_vpc.main.id
+  vpc_id      = aws_vpc.main.id # Correção: usa o recurso VPC criado
 
   ingress {
     from_port       = 8080
@@ -126,7 +124,7 @@ resource "aws_ecs_service" "main" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = data.aws_subnets.public.ids
+    subnets         = aws_subnet.public[*].id # Correção: usa o recurso de sub-redes criado
     security_groups = [aws_security_group.ecs_service_sg.id]
     assign_public_ip = true
   }
