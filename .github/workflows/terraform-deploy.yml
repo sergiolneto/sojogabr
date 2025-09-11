@@ -61,7 +61,7 @@ jobs:
           echo "::group::Pre-Apply Debug"
           echo "JWT Secret ARN: ${{ env.JWT_SECRET_ARN }}"
           echo "Environment: prod"
-          echo "::notice::JAR Path being used: $JAR_PATH"
           echo "::endgroup::"
           terraform apply -auto-approve tfplan
+          echo "::notice::JAR Path being used: $JAR_PATH"
           echo "::notice::Terraform apply completed - ECS resources created"
