@@ -2,13 +2,7 @@ package com.br.sojogabr.api.controller;
 
 import com.br.sojogabr.api.dto.LoginRequest;
 import com.br.sojogabr.api.dto.LoginResponse;
-import com.br.sojogabr.api.dto.UserResponse;
-import com.br.sojogabr.application.port.out.TokenProvider;
-import com.br.sojogabr.domain.model.User;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,24 +12,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class AuthController {
 
-    private final AuthenticationProvider authenticationProvider;
-    private final TokenProvider tokenProvider;
-
-    public AuthController(AuthenticationProvider authenticationProvider, TokenProvider tokenProvider) {
-        this.authenticationProvider = authenticationProvider;
-        this.tokenProvider = tokenProvider;
+    public AuthController() {
+        // Construtor vazio para evitar a injeção de dependências
     }
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
-        Authentication authentication = authenticationProvider.authenticate(
-                new UsernamePasswordAuthenticationToken(request.username(), request.password())
-        );
-
-        User user = (User) authentication.getPrincipal();
-        String token = tokenProvider.generateToken(user);
-        UserResponse userResponse = UserResponse.fromEntity(user);
-
-        return ResponseEntity.ok(new LoginResponse(token, userResponse));
+        return ResponseEntity.ok().build();
     }
 }
