@@ -50,7 +50,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // Retorna true (não filtra) se o caminho da requisição for exatamente igual a um dos caminhos
         // ou se começar com um dos caminhos que representam diretórios (como /static/ ou /actuator/).
         return publicPaths.stream().anyMatch(path ->
-                requestPath.equals(path) || (path.endsWith("/") && requestPath.startsWith(path))
+                requestPath.equals(path) || ((path.endsWith("/") || path.equals("/actuator")) && requestPath.startsWith(path))
         );
     }
 
