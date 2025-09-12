@@ -68,13 +68,13 @@ resource "aws_ecs_task_definition" "sojoga_backend_task" {
         },
         {
           name  = "DYNAMODB_USER_TABLE_NAME",
-          # TESTE: Acessando o recurso como uma lista para diagnóstico
-          value = aws_dynamodb_table.user_table[0].name
+          # CORREÇÃO: Referência direta ao nome do recurso
+          value = aws_dynamodb_table.user_table.name
         },
         {
           name  = "DYNAMODB_CAMPEONATO_TABLE_NAME",
-          # TESTE: Acessando o recurso como uma lista para diagnóstico
-          value = aws_dynamodb_table.campeonato_table[0].name
+          # CORREÇÃO: Referência direta ao nome do recurso
+          value = aws_dynamodb_table.campeonato_table.name
         },
         {
           name = "CORS_ALLOWED_ORIGINS",
