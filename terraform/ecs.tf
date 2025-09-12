@@ -10,8 +10,8 @@ data "aws_cloudwatch_log_groups" "existing_log_groups" {
 locals {
   # Verifica se algum grupo de logs com o prefixo foi encontrado.
   log_group_exists = length(data.aws_cloudwatch_log_groups.existing_log_groups.log_group_names) > 0
-  # Usa o nome do grupo de logs existente ou o nome do que será criado.
-  log_group_name   = local.log_group_exists ? data.aws_cloudwatch_log_groups.existing_log_groups.log_group_names[0] : aws_cloudwatch_log_group.sojoga_backend_logs[0].name
+  # CORREÇÃO: Converte o 'set' de nomes para uma 'list' antes de acessar o índice.
+  log_group_name   = local.log_group_exists ? tolist(data.aws_cloudwatch_log_groups.existing_log_groups.log_group_names)[0] : aws_cloudwatch_log_group.sojoga_backend_logs[0].name
 }
 
 # --- RECURSO DE LOGS ---
@@ -72,7 +72,6 @@ resource "aws_ecs_task_definition" "sojoga_backend_task" {
       logConfiguration = {
         logDriver = "awslogs",
         options = {
-          # CORREÇÃO: Usa a local para o nome do grupo de logs
           "awslogs-group"         = local.log_group_name,
           "awslogs-region"        = "sa-east-1",
           "awslogs-stream-prefix" = "ecs"
