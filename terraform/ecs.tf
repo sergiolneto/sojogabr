@@ -1,7 +1,23 @@
 # terraform/ecs.tf
 
+# --- FONTES DE DADOS ---
+# Usa a fonte de dados no plural para não falhar se o grupo de logs não for encontrado.
+data "aws_cloudwatch_log_groups" "existing_log_groups" {
+  log_group_name_prefix = "/ecs/sojoga-backend-${var.environment}"
+}
+
+# --- LÓGICA LOCAL ---
+locals {
+  # Verifica se algum grupo de logs com o prefixo foi encontrado.
+  log_group_exists = length(data.aws_cloudwatch_log_groups.existing_log_groups.log_group_names) > 0
+  # Usa o nome do grupo de logs existente ou o nome do que será criado.
+  log_group_name   = local.log_group_exists ? data.aws_cloudwatch_log_groups.existing_log_groups.log_group_names[0] : aws_cloudwatch_log_group.sojoga_backend_logs[0].name
+}
+
 # --- RECURSO DE LOGS ---
+# Cria o grupo de logs somente se ele não for encontrado.
 resource "aws_cloudwatch_log_group" "sojoga_backend_logs" {
+  count             = local.log_group_exists ? 0 : 1
   name              = "/ecs/sojoga-backend-${var.environment}"
   retention_in_days = 7
 
@@ -56,7 +72,8 @@ resource "aws_ecs_task_definition" "sojoga_backend_task" {
       logConfiguration = {
         logDriver = "awslogs",
         options = {
-          "awslogs-group"         = aws_cloudwatch_log_group.sojoga_backend_logs.name,
+          # CORREÇÃO: Usa a local para o nome do grupo de logs
+          "awslogs-group"         = local.log_group_name,
           "awslogs-region"        = "sa-east-1",
           "awslogs-stream-prefix" = "ecs"
         }
@@ -68,12 +85,10 @@ resource "aws_ecs_task_definition" "sojoga_backend_task" {
         },
         {
           name  = "DYNAMODB_USER_TABLE_NAME",
-          # CORREÇÃO: Referência direta ao nome do recurso
           value = aws_dynamodb_table.user_table.name
         },
         {
           name  = "DYNAMODB_CAMPEONATO_TABLE_NAME",
-          # CORREÇÃO: Referência direta ao nome do recurso
           value = aws_dynamodb_table.campeonato_table.name
         },
         {
