@@ -23,8 +23,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final TokenProvider tokenProvider;
     private final UserDetailsService userDetailsService;
-    // Lista de caminhos que devem ser ignorados pelo filtro JWT
-    private final List<String> publicPaths = List.of("/api/login", "/api/users", "/actuator");
+
+    // CORREÇÃO: Adicionados todos os caminhos públicos definidos no SecurityConfig
+    private final List<String> publicPaths = List.of(
+            "/api/login",
+            "/api/users",
+            "/actuator",
+            "/",
+            "/index.html",
+            "/cadastro.html",
+            "/static/",
+            "/favicon.ico"
+    );
 
     public JwtAuthenticationFilter(TokenProvider tokenProvider, @Qualifier("userService") UserDetailsService userDetailsService) {
         this.tokenProvider = tokenProvider;
@@ -36,10 +46,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      */
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) throws ServletException {
-        // Usar getRequestURI() é mais robusto que getServletPath()
         String requestPath = request.getRequestURI();
-        // Retorna true (não filtra) se o caminho da requisição começar com algum dos caminhos públicos
-        return publicPaths.stream().anyMatch(requestPath::startsWith);
+        // Retorna true (não filtra) se o caminho da requisição for exatamente igual a um dos caminhos
+        // ou se começar com um dos caminhos que representam diretórios (como /static/ ou /actuator/).
+        return publicPaths.stream().anyMatch(path ->
+                requestPath.equals(path) || (path.endsWith("/") && requestPath.startsWith(path))
+        );
     }
 
     @Override
