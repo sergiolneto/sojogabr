@@ -68,15 +68,17 @@ resource "aws_ecs_task_definition" "sojoga_backend_task" {
         },
         {
           name  = "DYNAMODB_USER_TABLE_NAME",
-          value = aws_dynamodb_table.user_table.name
+          # TESTE: Acessando o recurso como uma lista para diagnóstico
+          value = aws_dynamodb_table.user_table[0].name
         },
         {
           name  = "DYNAMODB_CAMPEONATO_TABLE_NAME",
-          value = aws_dynamodb_table.campeonato_table.name
+          # TESTE: Acessando o recurso como uma lista para diagnóstico
+          value = aws_dynamodb_table.campeonato_table[0].name
         },
         {
           name = "CORS_ALLOWED_ORIGINS",
-          value = "*" # Correção: Permite todas as origens para teste
+          value = "*"
         }
       ],
       secrets = [
@@ -123,7 +125,6 @@ resource "aws_ecs_service" "main" {
   desired_count   = 1
   launch_type     = "FARGATE"
 
-  # Adicionado para evitar o erro de idempotência em futuras atualizações
   lifecycle {
     create_before_destroy = true
   }
