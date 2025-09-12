@@ -108,6 +108,11 @@ resource "aws_ecs_task_definition" "sojoga_backend_task" {
     Project     = var.project_name
     Environment = var.environment
   }
+
+  # CORREÇÃO FINAL: Garante que a task definition seja atualizada quando a política do DynamoDB mudar.
+  depends_on = [
+    aws_iam_role_policy_attachment.dynamodb_access_attachment
+  ]
 }
 
 # Grupo de segurança para o serviço ECS
