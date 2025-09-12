@@ -1,7 +1,6 @@
 package com.br.sojogabr.infrastructure.configuration;
 
 import com.br.sojogabr.infrastructure.security.JwtAuthenticationFilter;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -34,8 +33,9 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserDetailsService userDetailsService;
 
-    @Value("${cors.allowed-origins}")
-    private String[] allowedOrigins;
+    // A anotação @Value foi removida para o teste
+    // @Value("${cors.allowed-origins}")
+    // private String[] allowedOrigins;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, UserDetailsService userDetailsService) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
@@ -62,13 +62,13 @@ public class SecurityConfig {
     }
 
     /**
-     * Configura a política de CORS para a aplicação, lendo as origens permitidas
-     * do arquivo application.properties.
+     * Configura a política de CORS para a aplicação. O valor foi hardcodado para teste.
      */
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins));
+        // O valor foi hardcodado para permitir todas as origens
+        configuration.setAllowedOrigins(List.of("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
