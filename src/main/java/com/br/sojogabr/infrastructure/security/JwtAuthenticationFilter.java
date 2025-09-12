@@ -16,7 +16,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -24,34 +23,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final TokenProvider tokenProvider;
     private final UserDetailsService userDetailsService;
 
-    // CORREÇÃO: Adicionados todos os caminhos públicos definidos no SecurityConfig
-    private final List<String> publicPaths = List.of(
-            "/api/login",
-            "/api/users",
-            "/actuator",
-            "/",
-            "/index.html",
-            "/cadastro.html",
-            "/static/",
-            "/favicon.ico"
-    );
-
     public JwtAuthenticationFilter(TokenProvider tokenProvider, @Qualifier("userService") UserDetailsService userDetailsService) {
         this.tokenProvider = tokenProvider;
         this.userDetailsService = userDetailsService;
-    }
-
-    /**
-     * Impede que o filtro seja executado para os endpoints públicos definidos.
-     */
-    @Override
-    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
-        String requestPath = request.getRequestURI();
-        // Retorna true (não filtra) se o caminho da requisição for exatamente igual a um dos caminhos
-        // ou se começar com um dos caminhos que representam diretórios (como /static/ ou /actuator/).
-        return publicPaths.stream().anyMatch(path ->
-                requestPath.equals(path) || ((path.endsWith("/") || path.equals("/actuator")) && requestPath.startsWith(path))
-        );
     }
 
     @Override
