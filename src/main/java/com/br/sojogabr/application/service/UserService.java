@@ -5,7 +5,6 @@ import com.br.sojogabr.api.exception.UserAlreadyExistsException;
 import com.br.sojogabr.application.port.in.UserUseCase;
 import com.br.sojogabr.domain.model.User;
 import com.br.sojogabr.domain.repository.UserRepository;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -21,8 +20,7 @@ public class UserService implements UserUseCase, UserDetailsService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    // A anotação @Lazy quebra a referência circular entre SecurityConfig e UserService
-    public UserService(UserRepository userRepository, @Lazy PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }

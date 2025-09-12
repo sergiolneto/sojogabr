@@ -6,7 +6,7 @@ import com.br.sojogabr.api.dto.UserResponse;
 import com.br.sojogabr.application.port.out.TokenProvider;
 import com.br.sojogabr.domain.model.User;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,17 +18,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class AuthController {
 
-    private final AuthenticationManager authenticationManager;
+    private final AuthenticationProvider authenticationProvider;
     private final TokenProvider tokenProvider;
 
-    public AuthController(AuthenticationManager authenticationManager, TokenProvider tokenProvider) {
-        this.authenticationManager = authenticationManager;
+    public AuthController(AuthenticationProvider authenticationProvider, TokenProvider tokenProvider) {
+        this.authenticationProvider = authenticationProvider;
         this.tokenProvider = tokenProvider;
     }
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
+        Authentication authentication = authenticationProvider.authenticate(
                 new UsernamePasswordAuthenticationToken(request.username(), request.password())
         );
 
