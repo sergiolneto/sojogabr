@@ -61,7 +61,6 @@ import_sg() {
 }
 
 # --- Recursos a serem importados ---
-
 import_resource "aws_dynamodb_table" "user_table" "Usuario-prod"
 import_resource "aws_dynamodb_table" "campeonato_table" "SojogaBrTable-prod"
 import_resource "aws_ecr_repository" "sojoga_backend_repo" "sojoga-backend-prod"
