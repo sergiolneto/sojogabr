@@ -72,8 +72,8 @@ import_listener() {
   if [ -n "$LB_ARN" ] && [ "$LB_ARN" != "None" ]; then
     echo "Found Load Balancer ARN: $LB_ARN"
     echo "Attempting to find Listener ARN for port: ${listener_port}"
-    LISTENER_ARN=$(aws elbv2 describe-listeners --load-balancer-arn "${LB_ARN}" --query "Listeners[?Port==\
-${listener_port}\
+    LISTENER_ARN=$(aws elbv2 describe-listeners --load-balancer-arn "${LB_ARN}" --query "Listeners[?Port==
+${listener_port}
 ].ListenerArn" --output text | tr -d '\r')
 
     if [ -n "$LISTENER_ARN" ] && [ "$LISTENER_ARN" != "None" ]; then
@@ -127,7 +127,7 @@ import_resource "aws_ecs_cluster" "sojoga_cluster" "${CLUSTER_NAME}"
 # --- Lógica de Importação Idempotente para o Serviço ECS ---
 echo "--- Handling ECS Service Import ---"
 SERVICE_NAME="sojoga-backend-prod-service"
-RESOURCE_ADDRESS="aws_ecs_service.main"
+RESOURCE_ADDRESS="aws_ecs_service.backend" # Corrigido para o novo nome do recurso
 # O ID de importação para um serviço ECS é "nome-do-cluster/nome-do-serviço"
 IMPORT_ID="${CLUSTER_NAME}/${SERVICE_NAME}"
 
@@ -143,13 +143,34 @@ else
   # 3. Importa apenas se o serviço estiver 'ACTIVE' ou 'DRAINING' (ou seja, existe de fato)
   if [ "$SERVICE_STATUS" != "NOT_FOUND" ] && [ "$SERVICE_STATUS" != "None" ]; then
     echo "Service found in AWS with status '${SERVICE_STATUS}'. Attempting to import..."
-    import_resource "aws_ecs_service" "main" "${IMPORT_ID}"
+    import_resource "aws_ecs_service" "backend" "${IMPORT_ID}" # Corrigido para o novo nome do recurso
   else
     echo "Service '${SERVICE_NAME}' not found in AWS or is inactive. Terraform will create it if necessary. Skipping import."
   fi
 fi
 
-# Importa o Listener do ALB
-import_listener "http" "alb-sojoga-br-prod" 80
+# --- Lógica de Importação Idempotente para o Serviço ECS Frontend ---
+echo "--- Handling ECS Frontend Service Import ---"
+FRONTEND_SERVICE_NAME="sojoga-frontend-prod-service"
+FRONTEND_RESOURCE_ADDRESS="aws_ecs_service.frontend"
+FRONTEND_IMPORT_ID="${CLUSTER_NAME}/${FRONTEND_SERVICE_NAME}"
+
+# 1. Verifica se o serviço já está no estado do Terraform
+echo "Checking if ECS Frontend Service is already in Terraform state..."
+if "$TERRAFORM_EXEC_PATH" state list | grep -q "^${FRONTEND_RESOURCE_ADDRESS}"; then
+  echo "ECS Frontend Service '${FRONTEND_SERVICE_NAME}' is already managed by Terraform. Skipping import."
+else
+  # 2. Se não estiver no estado, verifica se ele existe na AWS para poder importá-lo
+  echo "ECS Frontend Service not in state. Checking if it exists in AWS..."
+  FRONTEND_SERVICE_STATUS=$(aws ecs describe-services --cluster "${CLUSTER_NAME}" --services "${FRONTEND_SERVICE_NAME}" --query "services[0].status" --output text | tr -d '\r' || echo "NOT_FOUND")
+
+  # 3. Importa apenas se o serviço estiver 'ACTIVE' ou 'DRAINING' (ou seja, existe de fato)
+  if [ "$FRONTEND_SERVICE_STATUS" != "NOT_FOUND" ] && [ "$FRONTEND_SERVICE_STATUS" != "None" ]; then
+    echo "Service found in AWS with status '${FRONTEND_SERVICE_STATUS}'. Attempting to import..."
+    import_resource "aws_ecs_service" "frontend" "${FRONTEND_IMPORT_ID}"
+  else
+    echo "Service '${FRONTEND_SERVICE_NAME}' not found in AWS or is inactive. Terraform will create it if necessary. Skipping import."
+  fi
+fi
 
 echo "--- Resource import script finished ---"
