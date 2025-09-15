@@ -10,7 +10,6 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbParti
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
 
 import java.time.LocalDate;
-import java.util.List;
 
 /**
  * Representa 3 tipos de itens na tabela DynamoDB:

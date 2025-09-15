@@ -24,6 +24,7 @@ import java.time.Duration;
 import static org.testcontainers.containers.localstack.LocalStackContainer.Service.DYNAMODB;
 
 // A anotação @Testcontainers foi removida daqui e será colocada nas classes de teste concretas.
+@SuppressWarnings("resource")
 public abstract class AbstractIntegrationTest {
 
     // Padrão Singleton Container: O container é criado e iniciado apenas uma vez.
