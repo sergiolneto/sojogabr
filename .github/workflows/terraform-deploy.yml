@@ -59,6 +59,11 @@ jobs:
       - name: 'Terraform Workspace'
         run: terraform workspace select -or-create prod
 
+      - name: 'Install AWS CLI'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli
+
       - name: 'Run Import Script'
         run: |
           chmod +x ../.github/scripts/import_resources.sh
