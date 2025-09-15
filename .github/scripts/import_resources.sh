@@ -149,7 +149,6 @@ else
   fi
 fi
 
-<<<<<<< HEAD
 # Função para importar o Listener do ALB
 import_listener() {
   local resource_name=$1
@@ -175,8 +174,6 @@ import_listener() {
   fi
 }
 
-=======
->>>>>>> def6326648caf88f01becd9b2992cd63ff94d3f5
 # Importa o Listener do ALB
 import_listener "http" "alb-sojoga-br-prod" 80
 
