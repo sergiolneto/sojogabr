@@ -60,6 +60,33 @@ import_sg() {
   fi
 }
 
+# Função para importar o Listener do ALB
+import_listener() {
+  local resource_name=$1
+  local lb_name=$2
+  local listener_port=$3
+
+  echo "Attempting to find Load Balancer ARN for name: ${lb_name}"
+  LB_ARN=$(aws elbv2 describe-load-balancers --names "${lb_name}" --query "LoadBalancers[0].LoadBalancerArn" --output text | tr -d '\r')
+
+  if [ -n "$LB_ARN" ] && [ "$LB_ARN" != "None" ]; then
+    echo "Found Load Balancer ARN: $LB_ARN"
+    echo "Attempting to find Listener ARN for port: ${listener_port}"
+    LISTENER_ARN=$(aws elbv2 describe-listeners --load-balancer-arn "${LB_ARN}" --query "Listeners[?Port==\
+${listener_port}\
+].ListenerArn" --output text | tr -d '\r')
+
+    if [ -n "$LISTENER_ARN" ] && [ "$LISTENER_ARN" != "None" ]; then
+      echo "Found Listener ARN: $LISTENER_ARN"
+      import_resource "aws_lb_listener" "${resource_name}" "${LISTENER_ARN}"
+    else
+      echo "Listener on port '${listener_port}' not found for LB '${lb_name}', skipping import."
+    fi
+  else
+    echo "Load Balancer '${lb_name}' not found, skipping listener import."
+  fi
+}
+
 # --- Recursos a serem importados ---
 import_resource "aws_dynamodb_table" "user_table" "Usuario-prod"
 import_resource "aws_dynamodb_table" "campeonato_table" "SojogaBrTable-prod"
@@ -106,7 +133,7 @@ IMPORT_ID="${CLUSTER_NAME}/${SERVICE_NAME}"
 
 # 1. Verifica se o serviço já está no estado do Terraform
 echo "Checking if ECS Service is already in Terraform state..."
-if "$TERRAFORM_EXEC_PATH" state list | grep -q "^${RESOURCE_ADDRESS}$"; then
+if "$TERRAFORM_EXEC_PATH" state list | grep -q "^${RESOURCE_ADDRESS}$\"; then
   echo "ECS Service '${SERVICE_NAME}' is already managed by Terraform. Skipping import."
 else
   # 2. Se não estiver no estado, verifica se ele existe na AWS para poder importá-lo
@@ -122,4 +149,8 @@ else
   fi
 fi
 
+# Importa o Listener do ALB
+import_listener "http" "alb-sojoga-br-prod" 80
+
 echo "--- Resource import script finished ---"
+
