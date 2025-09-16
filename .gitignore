@@ -5,6 +5,7 @@ target/
 !**/src/test/**/target/
 LICENSE.txt
 
+aws.xml
 
 ### STS ###
 .apt_generated
@@ -21,7 +22,6 @@ LICENSE.txt
 *.iml
 *.ipr
 *.exe
-
 
 ### NetBeans ###
 /nbproject/private/
