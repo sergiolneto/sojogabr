@@ -19,4 +19,5 @@ variable "jwt_secret_arn" {
 variable "domain_name" {
   description = "Nome do dominio"
   type        = string
+  default     = "sojoga.eu.org"
 }

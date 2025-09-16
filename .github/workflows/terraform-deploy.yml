@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: 
       name: producao # Aponta para o Environment do GitHub
-      url: 'http://sojoga.com.br' # Opcional: URL do ambiente de produção
+      url: 'http://sojogabr.eu.org' # Opcional: URL do ambiente de produção
 
     env:
       JWT_SECRET_ARN: ${{ secrets.JWT_SECRET_ARN }}
