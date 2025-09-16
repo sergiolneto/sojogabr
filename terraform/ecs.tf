@@ -221,8 +221,6 @@ resource "aws_ecs_service" "backend" {
     container_name   = "sojoga-backend-container"
     container_port   = 8787
   }
-
-  depends_on = [aws_lb_listener.http]
 }
 
 resource "aws_ecs_service" "frontend" {
@@ -247,6 +245,4 @@ resource "aws_ecs_service" "frontend" {
     container_name   = "sojoga-frontend-container"
     container_port   = 80
   }
-
-  depends_on = [aws_lb_listener.http]
 }
