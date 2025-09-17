@@ -27,9 +27,10 @@ jobs:
       id-token: write
       contents: read
     runs-on: ubuntu-latest
+    timeout-minutes: 60 # Aumenta o tempo máximo de execução do job
     environment: 
       name: producao # Aponta para o Environment do GitHub
-      url: 'http://sojogabr.eu.org' # Opcional: URL do ambiente de produção
+      url: 'https://sojogabr.eu.org' # URL do ambiente de produção
 
     env:
       JWT_SECRET_ARN: ${{ secrets.JWT_SECRET_ARN }}
@@ -46,6 +47,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN_PROD}}
+          role-duration-seconds: 7200 # Aumenta a duração do token para 2 horas
           aws-region: sa-east-1
 
       - name: 'Setup Terraform'

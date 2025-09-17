@@ -133,8 +133,9 @@ if [ -n "$LB_ARN" ] && [ "$LB_ARN" != "None" ]; then
   import_resource "aws_lb" "main" "$LB_ARN"
 fi
 
-# Importa o Listener do ALB
+# Importa os Listeners do ALB
 import_listener "http" "alb-sojoga-br-prod" 80
+import_listener "https" "alb-sojoga-br-prod" 443
 
 # Para o Cluster ECS
 echo "Attempting to import ECS Cluster..."
