@@ -1,7 +1,10 @@
 package com.br.sojogabr.domain.model;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
@@ -15,8 +18,20 @@ import java.util.List;
 @DynamoDbBean
 public class User implements UserDetails {
 
+    // Enums movidos para dentro da classe e tornados públicos para acesso externo
+    public enum UserRole {
+        USER,
+        POWER_USER,
+        ADMIN
+    }
+
+    public enum UserStatus {
+        PENDING_APPROVAL,
+        ACTIVE,
+        INACTIVE
+    }
+
     private String id;
-    // Os setters de pk e sk são necessários para o DynamoDbEnhancedClient
     private String pk; // Partition Key (e.g., USER#<username>)
     private String sk; // Sort Key (e.g., METADATA)
 
@@ -32,6 +47,9 @@ public class User implements UserDetails {
     private String username;
     private String password;
 
+    private UserRole role;
+    private UserStatus status;
+
     @DynamoDbPartitionKey
     public String getPk() {
         return pk;
@@ -42,21 +60,23 @@ public class User implements UserDetails {
         return sk;
     }
 
-    // O GSI (Global Secondary Index) permite buscar um usuário pelo username
-    // sem saber o PK completo, se necessário.
     @DynamoDbSecondaryPartitionKey(indexNames = "username-index")
     public String getUsername() {
         return username;
     }
 
-    /**
-     * Retorna as autorizações concedidas ao usuário.
-     * Para este exemplo, retornamos uma lista vazia. Em um cenário real,
-     * você poderia mapear roles (ex: "ROLE_ADMIN", "ROLE_USER") aqui.
-     */
+    // Adiciona um GSI no campo 'status' para permitir buscas eficientes por status.
+    @DynamoDbSecondaryPartitionKey(indexNames = "status-index")
+    public UserStatus getStatus() {
+        return status;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        if (this.role == null) {
+            return List.of();
+        }
+        return List.of(new SimpleGrantedAuthority("ROLE_" + this.role.name()));
     }
 
     @Override
@@ -76,6 +96,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return this.status == UserStatus.ACTIVE;
     }
 }
