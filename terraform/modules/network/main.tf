@@ -1,4 +1,4 @@
-# terraform/network.tf
+# terraform/modules/network/main.tf
 
 # --- FONTES DE DADOS ---
 

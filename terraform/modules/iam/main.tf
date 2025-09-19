@@ -1,7 +1,6 @@
-# terraform/iam.tf
+# terraform/modules/iam/main.tf
 
 # --- Role para a EXECUÇÃO da Tarefa (Crachá do Entregador) ---
-# Permite ao ECS puxar imagens e segredos.
 data "aws_iam_policy_document" "ecs_task_assume_role_policy" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -23,7 +22,6 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_attachment" {
 }
 
 # --- Role para a TAREFA em si (Crachá do Funcionário) ---
-# Permite que a APLICAÇÃO acesse outros serviços da AWS.
 resource "aws_iam_role" "ecs_task_role" {
   name               = "ecs-task-role-${var.environment}"
   assume_role_policy = data.aws_iam_policy_document.ecs_task_assume_role_policy.json
@@ -53,10 +51,10 @@ resource "aws_iam_role_policy_attachment" "jwt_secret_attachment" {
 # Política para acessar o DynamoDB
 data "aws_iam_policy_document" "dynamodb_access_policy" {
   statement {
-    actions = ["dynamodb:*"] # Simplificado para garantir o acesso
+    actions = ["dynamodb:*"]
     resources = [
-      aws_dynamodb_table.user_table.arn,
-      aws_dynamodb_table.campeonato_table.arn
+      var.user_table_arn,
+      var.campeonato_table_arn
     ]
   }
 }
@@ -65,7 +63,6 @@ resource "aws_iam_policy" "dynamodb_access" {
   name   = "dynamodb-access-policy-${var.environment}"
   policy = data.aws_iam_policy_document.dynamodb_access_policy.json
 
-  # ADIÇÃO: Adiciona uma tag com o timestamp para forçar a atualização da política em cada deploy.
   tags = {
     LastUpdated = timestamp()
   }

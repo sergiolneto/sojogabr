@@ -1,0 +1,31 @@
+name: Create PR from Develop to Main
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  create-pull-request:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Create Pull Request
+        uses: actions/github-script@v6
+
+      - name: Create Pull Request if one does not exist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! gh pr list --head develop --base main --state open | grep -q "develop"; then
+            echo "Criando um novo Pull Request..."
+            gh pr create \
+              --base main \
+              --head develop \
+              --title 'feat: Sincronizar develop main' \
+              --body 'Este PR foi criado automaticamente para sincronizar as mudanças da branch `develop´com a `main`. Por favor, revise, aprove e faça o merge.'
+          else
+            echo "Um Pull Request da branch develop apra a main já existe."
+          fi

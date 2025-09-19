@@ -1,10 +1,10 @@
-# terraform/load_balancer.tf
+# terraform/modules/load_balancer/main.tf
 
 # Security group for the Load Balancer, allowing traffic on port 80 (HTTP)
 resource "aws_security_group" "lb_sg" {
   name        = "lb-sg-${var.project_name}-${var.environment}"
   description = "Allow HTTP inbound traffic"
-  vpc_id      = local.vpc_id
+  vpc_id      = var.vpc_id
 
   ingress {
     from_port   = 80
@@ -27,7 +27,7 @@ resource "aws_lb" "main" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.lb_sg.id]
-  subnets            = local.subnet_ids
+  subnets            = var.subnet_ids
 }
 
 # Target group for the backend service
@@ -35,9 +35,9 @@ resource "aws_lb_target_group" "backend" {
   name        = "tg-backend-${var.project_name}-${var.environment}"
   port        = 8787
   protocol    = "HTTP"
-  vpc_id      = local.vpc_id
+  vpc_id      = var.vpc_id
   target_type = "ip"
-  
+
   health_check {
     enabled             = true
     interval            = 30
@@ -56,9 +56,9 @@ resource "aws_lb_target_group" "frontend" {
   name        = "tg-frontend-${var.project_name}-${var.environment}"
   port        = 80
   protocol    = "HTTP"
-  vpc_id      = local.vpc_id
+  vpc_id      = var.vpc_id
   target_type = "ip"
-  
+
   health_check {
     enabled             = true
     interval            = 30
@@ -77,7 +77,7 @@ resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.main.arn
   port              = "80"
   protocol          = "HTTP"
-  
+
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.frontend.arn
