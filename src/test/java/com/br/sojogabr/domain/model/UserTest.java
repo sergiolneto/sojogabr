@@ -31,7 +31,8 @@ class UserTest {
         User user = new User(
                 "123", "USER#johndoe", "METADATA", "John Doe", "john.doe@email.com",
                 "Rua X, 123", "11999998888", "@johndoe", esportes,
-                "Time A", "Atacante", true, "johndoe", "senha123"
+                "Time A", "Atacante", true, "johndoe", "senha123",
+                User.UserRole.USER, User.UserStatus.ACTIVE // Adiciona os novos campos
         );
 
         // Assert
@@ -44,6 +45,8 @@ class UserTest {
         assertThat(user.getEsportes()).containsExactly("Futebol", "Vôlei");
         assertThat(user.getUsername()).isEqualTo("johndoe");
         assertThat(user.isCapitao()).isTrue();
+        assertThat(user.getRole()).isEqualTo(User.UserRole.USER);
+        assertThat(user.getStatus()).isEqualTo(User.UserStatus.ACTIVE);
     }
 
     @Test
@@ -73,11 +76,16 @@ class UserTest {
         user.setCapitao(false);
         List<String> novosEsportes = List.of("Basquete");
         user.setEsportes(novosEsportes);
+        user.setRole(User.UserRole.ADMIN);
+        user.setStatus(User.UserStatus.INACTIVE);
+
 
         // Assert
         assertThat(user.getNome()).isEqualTo("Jane Doe");
         assertThat(user.getEmail()).isEqualTo("jane.doe@email.com");
         assertThat(user.isCapitao()).isFalse();
         assertThat(user.getEsportes()).isEqualTo(novosEsportes);
+        assertThat(user.getRole()).isEqualTo(User.UserRole.ADMIN);
+        assertThat(user.getStatus()).isEqualTo(User.UserStatus.INACTIVE);
     }
 }
