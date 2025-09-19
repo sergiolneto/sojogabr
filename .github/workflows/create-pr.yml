@@ -1,31 +1,35 @@
 name: Create PR from Develop to Main
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI Build & Test"]
+    types:
+      - completed
     branches:
       - develop
 
 jobs:
   create-pull-request:
+    # Esta condição garante que o job só execute se o workflow anterior foi bem-sucedido
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
+      # Passo 1: Faz o checkout do código
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: Create Pull Request
-        uses: actions/github-script@v6
-
+      # Passo 2: Cria o Pull Request
       - name: Create Pull Request if one does not exist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if ! gh pr list --head develop --base main --state open | grep -q "develop"; then
-            echo "Criando um novo Pull Request..."
+            echo "Workflow de CI/CD concluído com sucesso. Criando um novo Pull Request..."
             gh pr create \
               --base main \
               --head develop \
-              --title 'feat: Sincronizar develop main' \
-              --body 'Este PR foi criado automaticamente para sincronizar as mudanças da branch `develop´com a `main`. Por favor, revise, aprove e faça o merge.'
+              --title 'feat: Sincronizar develop com main' \
+              --body 'Este PR foi criado automaticamente após o sucesso do workflow de CI/CD para sincronizar as mudanças da branch `develop` com a `main`. Por favor, revise, aprove e faça o merge.'
           else
-            echo "Um Pull Request da branch develop apra a main já existe."
+            echo "Um Pull Request da branch develop para a main já existe."
           fi
