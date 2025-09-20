@@ -15,9 +15,3 @@ variable "jwt_secret_arn" {
   description = "O ARN do segredo JWT armazenado no AWS Secrets Manager."
   type        = string
 }
-
-variable "domain_name" {
-  description = "Nome do dominio"
-  type        = string
-  default     = "sojoga.eu.org"
-}

@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -44,7 +45,6 @@ public class UserService implements UserUseCase, UserDetailsService {
 
     @Override
     public User registerUser(RegisterRequest request) {
-        // Validação para evitar usuários duplicados
         userRepository.findByUsername(request.username()).ifPresent(user -> {
             throw new UserAlreadyExistsException("Username '" + request.username() + "' já está em uso.");
         });
@@ -59,7 +59,31 @@ public class UserService implements UserUseCase, UserDetailsService {
 
         newUser.setPk("USER#" + newUser.getUsername());
         newUser.setSk("METADATA");
-        
+
+        newUser.setRole(User.UserRole.USER);
+        newUser.setStatus(User.UserStatus.PENDING_APPROVAL);
+
         return userRepository.save(newUser);
+    }
+
+    // --- Implementação dos novos métodos de administração ---
+
+    @Override
+    public List<User> findPendingUsers() {
+        return userRepository.findByStatus(User.UserStatus.PENDING_APPROVAL);
+    }
+
+    @Override
+    public User approveUser(String username) {
+        User userToApprove = findByUsername(username); // Reusa o método que já lança exceção se não encontrar
+        userToApprove.setStatus(User.UserStatus.ACTIVE);
+        return userRepository.save(userToApprove);
+    }
+
+    @Override
+    public User promoteUser(String username) {
+        User userToPromote = findByUsername(username);
+        userToPromote.setRole(User.UserRole.POWER_USER);
+        return userRepository.save(userToPromote);
     }
 }

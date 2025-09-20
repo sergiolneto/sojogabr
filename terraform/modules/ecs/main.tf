@@ -1,4 +1,4 @@
-# terraform/ecs.tf
+# terraform/modules/ecs/main.tf
 
 # --- FONTES DE DADOS ---
 data "aws_cloudwatch_log_groups" "existing_log_groups" {
@@ -57,8 +57,8 @@ resource "aws_ecs_task_definition" "sojoga_backend_task" {
   cpu                      = "256"
   memory                   = "512"
 
-  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
-  task_role_arn      = aws_iam_role.ecs_task_role.arn
+  execution_role_arn = var.ecs_task_execution_role_arn
+  task_role_arn      = var.ecs_task_role_arn
 
   container_definitions = jsonencode([
     {
@@ -88,11 +88,11 @@ resource "aws_ecs_task_definition" "sojoga_backend_task" {
         },
         {
           name  = "DYNAMODB_USER_TABLE_NAME",
-          value = aws_dynamodb_table.user_table.name
+          value = var.user_table_name
         },
         {
           name  = "DYNAMODB_CAMPEONATO_TABLE_NAME",
-          value = aws_dynamodb_table.campeonato_table.name
+          value = var.campeonato_table_name
         },
         {
           name = "CORS_ALLOWED_ORIGINS",
@@ -112,10 +112,6 @@ resource "aws_ecs_task_definition" "sojoga_backend_task" {
     Project     = var.project_name
     Environment = var.environment
   }
-
-  depends_on = [
-    aws_iam_role_policy_attachment.dynamodb_access_attachment
-  ]
 }
 
 resource "aws_ecs_task_definition" "sojoga_frontend_task" {
@@ -125,7 +121,7 @@ resource "aws_ecs_task_definition" "sojoga_frontend_task" {
   cpu                      = "256"
   memory                   = "512"
 
-  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  execution_role_arn = var.ecs_task_execution_role_arn
 
   container_definitions = jsonencode([
     {
@@ -161,13 +157,13 @@ resource "aws_ecs_task_definition" "sojoga_frontend_task" {
 resource "aws_security_group" "ecs_backend_service_sg" {
   name        = "ecs-backend-sg-${var.project_name}-${var.environment}"
   description = "Allow inbound traffic from the ALB to backend"
-  vpc_id      = local.vpc_id
+  vpc_id      = var.vpc_id
 
   ingress {
     from_port       = 8787
     to_port         = 8787
     protocol        = "tcp"
-    security_groups = [aws_security_group.lb_sg.id]
+    security_groups = [var.lb_security_group_id]
   }
 
   egress {
@@ -181,13 +177,13 @@ resource "aws_security_group" "ecs_backend_service_sg" {
 resource "aws_security_group" "ecs_frontend_service_sg" {
   name        = "ecs-frontend-sg-${var.project_name}-${var.environment}"
   description = "Allow inbound traffic from the ALB to frontend"
-  vpc_id      = local.vpc_id
+  vpc_id      = var.vpc_id
 
   ingress {
     from_port       = 80
     to_port         = 80
     protocol        = "tcp"
-    security_groups = [aws_security_group.lb_sg.id]
+    security_groups = [var.lb_security_group_id]
   }
 
   egress {
@@ -211,13 +207,13 @@ resource "aws_ecs_service" "backend" {
   }
 
   network_configuration {
-    subnets         = local.subnet_ids
+    subnets         = var.subnet_ids
     security_groups = [aws_security_group.ecs_backend_service_sg.id]
     assign_public_ip = true
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.backend.arn
+    target_group_arn = var.backend_target_group_arn
     container_name   = "sojoga-backend-container"
     container_port   = 8787
   }
@@ -235,13 +231,13 @@ resource "aws_ecs_service" "frontend" {
   }
 
   network_configuration {
-    subnets         = local.subnet_ids
+    subnets         = var.subnet_ids
     security_groups = [aws_security_group.ecs_frontend_service_sg.id]
     assign_public_ip = true
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.frontend.arn
+    target_group_arn = var.frontend_target_group_arn
     container_name   = "sojoga-frontend-container"
     container_port   = 80
   }
