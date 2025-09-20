@@ -72,8 +72,8 @@ import_listener() {
   if [ -n "$LB_ARN" ] && [ "$LB_ARN" != "None" ]; then
     echo "Found Load Balancer ARN: $LB_ARN"
     echo "Attempting to find Listener ARN for port: ${listener_port}"
-    LISTENER_ARN=$(aws elbv2 describe-listeners --load-balancer-arn "${LB_ARN}" --query "Listeners[?Port==\
-${listener_port}\
+    LISTENER_ARN=$(aws elbv2 describe-listeners --load-balancer-arn "${LB_ARN}" --query "Listeners[?Port==
+${listener_port}
 ].ListenerArn" --output text | tr -d '\r')
 
     if [ -n "$LISTENER_ARN" ] && [ "$LISTENER_ARN" != "None" ]; then
@@ -87,28 +87,44 @@ ${listener_port}\
   fi
 }
 
+# Função para importar um Target Group
+import_tg() {
+  local resource_name=$1
+  local tg_name=$2
+
+  echo "Attempting to find Target Group ARN for name: ${tg_name}"
+  TG_ARN=$(aws elbv2 describe-target-groups --names "${tg_name}" --query "TargetGroups[0].TargetGroupArn" --output text | tr -d '\r')
+
+  if [ -n "$TG_ARN" ] && [ "$TG_ARN" != "None" ]; then
+    echo "Found Target Group ARN: $TG_ARN"
+    import_resource "aws_lb_target_group" "${resource_name}" "${TG_ARN}"
+  else
+    echo "Target Group '${tg_name}' not found, skipping import."
+  fi
+}
+
 # --- Recursos a serem importados ---
 import_resource "aws_dynamodb_table" "user_table" "Usuario-prod"
 import_resource "aws_dynamodb_table" "campeonato_table" "SojogaBrTable-prod"
 import_resource "aws_ecr_repository" "sojoga_backend_repo" "sojoga-backend-prod"
+import_resource "aws_ecr_repository" "sojoga_frontend_repo" "sojoga-frontend-prod"
 
 # Importa as Roles do IAM
 import_resource "aws_iam_role" "ecs_task_execution_role" "ecs-task-execution-role-prod"
 import_resource "aws_iam_role" "ecs_task_role" "ecs-task-role-prod"
 
+# Importa os Security Groups
 import_sg "lb_sg" "lb-sg-sojoga-br-prod"
-import_sg "ecs_service_sg" "ecs-service-sg-sojoga-br-prod"
+import_sg "ecs_backend_service_sg" "ecs-backend-sg-sojoga-br-prod"
+import_sg "ecs_frontend_service_sg" "ecs-frontend-sg-sojoga-br-prod"
 
 # Importa as políticas do IAM pelo nome
 import_iam_policy "jwt_secret_access" "jwt-secret-access-policy-prod"
 import_iam_policy "dynamodb_access" "dynamodb-access-policy-prod"
 
-# Para o Target Group
-echo "Attempting to import Target Group..."
-TG_ARN=$(aws elbv2 describe-target-groups --names tg-sojoga-br-prod --region sa-east-1 --query "TargetGroups[0].TargetGroupArn" --output text | tr -d '\r')
-if [ -n "$TG_ARN" ] && [ "$TG_ARN" != "None" ]; then
-  import_resource "aws_lb_target_group" "main" "$TG_ARN"
-fi
+# Importa os Target Groups
+import_tg "backend" "tg-backend-sojoga-br-prod"
+import_tg "frontend" "tg-frontend-sojoga-br-prod"
 
 # Para o Load Balancer
 echo "Attempting to import Load Balancer..."
@@ -117,40 +133,53 @@ if [ -n "$LB_ARN" ] && [ "$LB_ARN" != "None" ]; then
   import_resource "aws_lb" "main" "$LB_ARN"
 fi
 
-# Para o Cluster ECS - CORRIGIDO
+# Importa os Listeners do ALB
+import_listener "http" "alb-sojoga-br-prod" 80
+import_listener "https" "alb-sojoga-br-prod" 443
+
+# Para o Cluster ECS
 echo "Attempting to import ECS Cluster..."
 CLUSTER_NAME="sojoga-cluster-prod"
-# A importação do cluster usa o NOME, não o ARN.
 import_resource "aws_ecs_cluster" "sojoga_cluster" "${CLUSTER_NAME}"
 
-
-# --- Lógica de Importação Idempotente para o Serviço ECS ---
-echo "--- Handling ECS Service Import ---"
+# --- Lógica de Importação Idempotente para o Serviço ECS Backend ---
+echo "--- Handling ECS Backend Service Import ---"
 SERVICE_NAME="sojoga-backend-prod-service"
-RESOURCE_ADDRESS="aws_ecs_service.main"
-# O ID de importação para um serviço ECS é "nome-do-cluster/nome-do-serviço"
+RESOURCE_ADDRESS="aws_ecs_service.backend"
 IMPORT_ID="${CLUSTER_NAME}/${SERVICE_NAME}"
 
-# 1. Verifica se o serviço já está no estado do Terraform
-echo "Checking if ECS Service is already in Terraform state..."
-if "$TERRAFORM_EXEC_PATH" state list | grep -q "^${RESOURCE_ADDRESS}$\"; then
-  echo "ECS Service '${SERVICE_NAME}' is already managed by Terraform. Skipping import."
+echo "Checking if ECS Backend Service is already in Terraform state..."
+if "$TERRAFORM_EXEC_PATH" state list | grep -q "^${RESOURCE_ADDRESS}"; then
+  echo "ECS Backend Service '${SERVICE_NAME}' is already managed by Terraform. Skipping import."
 else
-  # 2. Se não estiver no estado, verifica se ele existe na AWS para poder importá-lo
-  echo "ECS Service not in state. Checking if it exists in AWS..."
+  echo "ECS Backend Service not in state. Checking if it exists in AWS..."
   SERVICE_STATUS=$(aws ecs describe-services --cluster "${CLUSTER_NAME}" --services "${SERVICE_NAME}" --query "services[0].status" --output text | tr -d '\r' || echo "NOT_FOUND")
-
-  # 3. Importa apenas se o serviço estiver 'ACTIVE' ou 'DRAINING' (ou seja, existe de fato)
   if [ "$SERVICE_STATUS" != "NOT_FOUND" ] && [ "$SERVICE_STATUS" != "None" ]; then
     echo "Service found in AWS with status '${SERVICE_STATUS}'. Attempting to import..."
-    import_resource "aws_ecs_service" "main" "${IMPORT_ID}"
+    import_resource "aws_ecs_service" "backend" "${IMPORT_ID}"
   else
     echo "Service '${SERVICE_NAME}' not found in AWS or is inactive. Terraform will create it if necessary. Skipping import."
   fi
 fi
 
-# Importa o Listener do ALB
-import_listener "http" "alb-sojoga-br-prod" 80
+# --- Lógica de Importação Idempotente para o Serviço ECS Frontend ---
+echo "--- Handling ECS Frontend Service Import ---"
+FRONTEND_SERVICE_NAME="sojoga-frontend-prod-service"
+FRONTEND_RESOURCE_ADDRESS="aws_ecs_service.frontend"
+FRONTEND_IMPORT_ID="${CLUSTER_NAME}/${FRONTEND_SERVICE_NAME}"
+
+echo "Checking if ECS Frontend Service is already in Terraform state..."
+if "$TERRAFORM_EXEC_PATH" state list | grep -q "^${FRONTEND_RESOURCE_ADDRESS}"; then
+  echo "ECS Frontend Service '${FRONTEND_SERVICE_NAME}' is already managed by Terraform. Skipping import."
+else
+  echo "ECS Frontend Service not in state. Checking if it exists in AWS..."
+  FRONTEND_SERVICE_STATUS=$(aws ecs describe-services --cluster "${CLUSTER_NAME}" --services "${FRONTEND_SERVICE_NAME}" --query "services[0].status" --output text | tr -d '\r' || echo "NOT_FOUND")
+  if [ "$FRONTEND_SERVICE_STATUS" != "NOT_FOUND" ] && [ "$FRONTEND_SERVICE_STATUS" != "None" ]; then
+    echo "Service found in AWS with status '${FRONTEND_SERVICE_STATUS}'. Attempting to import..."
+    import_resource "aws_ecs_service" "frontend" "${FRONTEND_IMPORT_ID}"
+  else
+    echo "Service '${FRONTEND_SERVICE_NAME}' not found in AWS or is inactive. Terraform will create it if necessary. Skipping import."
+  fi
+fi
 
 echo "--- Resource import script finished ---"
-
