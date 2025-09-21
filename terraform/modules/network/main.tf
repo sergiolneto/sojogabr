@@ -56,7 +56,7 @@ resource "aws_subnet" "public" {
   count                   = local.vpc_exists ? 0 : 3
   vpc_id                  = aws_vpc.main[0].id # Dependência explícita
   cidr_block              = cidrsubnet(aws_vpc.main[0].cidr_block, 8, count.index)
-  availability_zone       = "${data.aws_region.current.name}${element(["a", "b", "c"], count.index)}"
+  availability_zone       = "${data.aws_region.current.id}${element(["a", "b", "c"], count.index)}"
   map_public_ip_on_launch = true
 
   tags = {
