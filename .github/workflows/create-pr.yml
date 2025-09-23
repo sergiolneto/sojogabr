@@ -13,6 +13,10 @@ jobs:
     # Esta condição garante que o job só execute se o workflow anterior foi bem-sucedido
     if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read          # Necessário para a ação de checkout (actions/checkout)
+      pull-requests: write   # Necessário para criar o Pull Request (gh pr create)
+
     steps:
       # Passo 1: Faz o checkout do código
       - name: Checkout repository
@@ -23,13 +27,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if ! gh pr list --head develop --base main --state open | grep -q "develop"; then
+          if [ "$(gh pr list --head develop --base main --state open --json number | jq 'length')" -eq 0 ]; then
             echo "Workflow de CI/CD concluído com sucesso. Criando um novo Pull Request..."
             gh pr create \
               --base main \
               --head develop \
               --title 'feat: Sincronizar develop com main' \
-              --body 'Este PR foi criado automaticamente após o sucesso do workflow de CI/CD para sincronizar as mudanças da branch `develop` com a `main`. Por favor, revise, aprove e faça o merge.'
+              --body 'Este PR foi criado automaticamente após o sucesso do workflow de CI/CD para sincronizar as mudanças da branch `develop` com a `main`. Por favor, revise, aprove e faça o merge.' \
+              --label 'automação' \
           else
             echo "Um Pull Request da branch develop para a main já existe."
           fi

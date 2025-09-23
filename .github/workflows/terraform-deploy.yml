@@ -34,6 +34,7 @@ jobs:
 
     env:
       JWT_SECRET_ARN: ${{ secrets.JWT_SECRET_ARN }}
+      DOMAIN_NAME: 'sojogabr.eu.org'
 
     defaults:
       run:
@@ -74,10 +75,10 @@ jobs:
           ../.github/scripts/import_resources.sh "$TF_PATH"
 
       - name: 'Terraform Plan'
-        run: terraform plan -var="environment=prod" -var="jwt_secret_arn=${{ env.JWT_SECRET_ARN }}" -out=tfplan
+        run: terraform plan -var="environment=prod" -var="jwt_secret_arn=${{ env.JWT_SECRET_ARN }}" -var="domain_name=${{ env.DOMAIN_NAME }}" -out=tfplan
 
       - name: 'Terraform Apply'
-        run: terraform apply -auto-approve tfplan
+        run: terraform apply -auto-approve tfplan # O plano já contém as variáveis
 
   destroy-prod:
     name: 'Destroy Infra de Produção'
@@ -91,6 +92,7 @@ jobs:
 
     env:
       JWT_SECRET_ARN: ${{ secrets.JWT_SECRET_ARN }}
+      DOMAIN_NAME: 'sojogabr.eu.org'
 
     defaults:
       run:
@@ -118,4 +120,4 @@ jobs:
         run: terraform workspace select -or-create prod
 
       - name: 'Terraform Destroy'
-        run: terraform destroy -auto-approve -var="environment=prod" -var="jwt_secret_arn=${{ env.JWT_SECRET_ARN }}"
+        run: terraform destroy -auto-approve -var="environment=prod" -var="jwt_secret_arn=${{ env.JWT_SECRET_ARN }}" -var="domain_name=${{ env.DOMAIN_NAME }}"
