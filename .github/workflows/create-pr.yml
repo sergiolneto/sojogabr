@@ -27,7 +27,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if ! gh pr list --head develop --base main --state open | grep -q "develop"; then
+          if [ "$(gh pr list --head develop --base main --state open --json number | jq 'length')" -eq 0 ]; then
             echo "Workflow de CI/CD concluído com sucesso. Criando um novo Pull Request..."
             gh pr create \
               --base main \
