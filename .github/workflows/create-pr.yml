@@ -33,7 +33,8 @@ jobs:
               --base main \
               --head develop \
               --title 'feat: Sincronizar develop com main' \
-              --body 'Este PR foi criado automaticamente após o sucesso do workflow de CI/CD para sincronizar as mudanças da branch `develop` com a `main`. Por favor, revise, aprove e faça o merge.'
+              --body 'Este PR foi criado automaticamente após o sucesso do workflow de CI/CD para sincronizar as mudanças da branch `develop` com a `main`. Por favor, revise, aprove e faça o merge.' \
+              --label 'automação'
           else
             echo "Um Pull Request da branch develop para a main já existe."
           fi
