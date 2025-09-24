@@ -30,11 +30,11 @@ jobs:
     timeout-minutes: 60 # Aumenta o tempo máximo de execução do job
     environment: 
       name: producao # Aponta para o Environment do GitHub
-      url: 'https://sojogabr.eu.org' # URL do ambiente de produção
+      url: 'https://sojogabr.qzz.io' # URL do ambiente de produção
 
     env:
       JWT_SECRET_ARN: ${{ secrets.JWT_SECRET_ARN }}
-      DOMAIN_NAME: 'sojogabr.eu.org'
+      DOMAIN_NAME: 'sojogabr.qzz.io'
 
     defaults:
       run:
@@ -92,7 +92,7 @@ jobs:
 
     env:
       JWT_SECRET_ARN: ${{ secrets.JWT_SECRET_ARN }}
-      DOMAIN_NAME: 'sojogabr.eu.org'
+      DOMAIN_NAME: 'sojogabr.qzz.io'
 
     defaults:
       run:

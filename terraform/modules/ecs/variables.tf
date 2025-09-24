@@ -1,61 +1,37 @@
 # terraform/modules/ecs/variables.tf
 
-variable "project_name" {
-  description = "O nome do projeto."
+variable "environment" {
+  description = "O ambiente de deploy (ex: dev, prod)."
   type        = string
 }
 
-variable "environment" {
-  description = "O ambiente da implantação."
+variable "project_name" {
+  description = "O nome do projeto, usado para tagueamento de recursos."
   type        = string
 }
 
 variable "vpc_id" {
-  description = "O ID da VPC."
+  description = "O ID da VPC onde os recursos do ECS serão criados."
   type        = string
 }
 
-variable "subnet_ids" {
-  description = "A lista de IDs das sub-redes."
+variable "public_subnet_ids" {
+  description = "Lista de IDs das sub-redes públicas para o serviço ECS."
   type        = list(string)
 }
 
-variable "ecs_task_execution_role_arn" {
-  description = "O ARN da role de execução da tarefa ECS."
-  type        = string
-}
-
-variable "ecs_task_role_arn" {
-  description = "O ARN da role da tarefa ECS."
-  type        = string
-}
-
-variable "user_table_name" {
-  description = "O nome da tabela de usuários do DynamoDB."
-  type        = string
-}
-
-variable "campeonato_table_name" {
-  description = "O nome da tabela de campeonatos do DynamoDB."
+variable "target_group_arn" {
+  description = "O ARN do Target Group do Load Balancer para associar ao serviço."
   type        = string
 }
 
 variable "jwt_secret_arn" {
-  description = "O ARN do segredo JWT."
+  description = "ARN do segredo no AWS Secrets Manager para a chave JWT."
   type        = string
+  sensitive   = true
 }
 
 variable "lb_security_group_id" {
   description = "O ID do Security Group do Load Balancer."
-  type        = string
-}
-
-variable "backend_target_group_arn" {
-  description = "O ARN do Target Group do backend."
-  type        = string
-}
-
-variable "frontend_target_group_arn" {
-  description = "O ARN do Target Group do frontend."
   type        = string
 }
