@@ -81,7 +81,7 @@ resource "aws_iam_role_policy" "read_jwt_secret" {
 
 # 4. Security Group para os contêineres
 resource "aws_security_group" "ecs_tasks" {
-  name        = "sg-ecs-tasks-${var.environment}"
+  name        = "sojoga-ecs-tasks-${var.environment}"
   description = "Permite tráfego para os contêineres ECS"
   vpc_id      = var.vpc_id
 
@@ -102,7 +102,7 @@ resource "aws_security_group" "ecs_tasks" {
   }
 
   tags = {
-    Name        = "sg-ecs-tasks-${var.environment}"
+    Name        = "sojoga-ecs-tasks-${var.environment}"
     Environment = var.environment
     Project     = var.project_name
   }

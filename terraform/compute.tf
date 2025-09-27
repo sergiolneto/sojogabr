@@ -68,6 +68,11 @@ resource "aws_lb_target_group" "main" {
     healthy_threshold   = 2
     unhealthy_threshold = 2
   }
+
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
+  }
 }
 
 # 4. Listener HTTP na porta 80 para redirecionar para HTTPS
@@ -84,6 +89,11 @@ resource "aws_lb_listener" "http" {
       status_code = "HTTP_301"
     }
   }
+
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
+  }
 }
 
 # 5. Listener HTTPS na porta 443 para encaminhar para o Target Group
@@ -91,11 +101,16 @@ resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.main.arn
   port              = "443"
   protocol          = "HTTPS"
-  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06" # Política mais moderna e segura
   certificate_arn   = aws_acm_certificate.main.arn
 
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.main.arn
+  }
+
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
   }
 }
