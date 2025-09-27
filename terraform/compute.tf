@@ -2,7 +2,7 @@
 
 # 1. Security Group para o Application Load Balancer
 resource "aws_security_group" "lb" {
-  name        = "sg-lb-${var.environment}"
+  name        = "sojoga-lb-${var.environment}"
   description = "Controla o acesso ao Application Load Balancer"
   vpc_id      = module.network.vpc_id
 
@@ -31,7 +31,7 @@ resource "aws_security_group" "lb" {
   }
 
   tags = {
-    Name        = "sg-lb-${var.environment}"
+    Name        = "sojoga-lb-${var.environment}"
     Environment = var.environment
     Project     = var.project_name
   }
