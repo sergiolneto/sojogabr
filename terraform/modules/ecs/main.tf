@@ -170,6 +170,11 @@ resource "aws_ecs_service" "backend" {
     container_name   = "sojoga-backend-container"
     container_port   = 8080
   }
+
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
+  }
 }
 
 # 7. Grupo de Logs para o serviço
