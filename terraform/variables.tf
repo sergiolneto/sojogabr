@@ -5,6 +5,11 @@ variable "domain_name" {
   type        = string
 }
 
+variable "domain_names" {
+  description = "Uma lista dos nomes de domínio para a aplicação (ex: [\"sojoga.com\", \"www.sojoga.com\"])"
+  type        = list(string)
+}
+
 variable "environment" {
   description = "O ambiente de deploy (ex: dev, prod)."
   type        = string
@@ -20,4 +25,9 @@ variable "jwt_secret_arn" {
   description = "ARN do segredo no AWS Secrets Manager para a chave JWT."
   type        = string
   sensitive   = true
+}
+
+variable "vpc_id" {
+  description = "O ID da VPC (existente ou recém-criada)."
+  type        = string
 }

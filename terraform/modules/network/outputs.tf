@@ -6,6 +6,6 @@ output "vpc_id" {
 }
 
 output "public_subnet_ids" {
-  description = "Lista com os IDs das sub-redes públicas (existentes ou recém-criadas)."
+  description = "A lista de IDs das sub-redes públicas (existentes ou recém-criadas)."
   value       = local.subnet_ids
 }
