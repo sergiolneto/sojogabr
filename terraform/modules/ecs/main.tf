@@ -1,146 +1,144 @@
 # terraform/modules/ecs/main.tf
 
-# --- FONTES DE DADOS ---
-data "aws_cloudwatch_log_groups" "existing_log_groups" {
-  log_group_name_prefix = "/ecs/sojoga-backend-${var.environment}"
-}
+# 1. Repositórios de Imagem (ECR)
+resource "aws_ecr_repository" "backend" {
+  name                 = "${var.project_name}-backend-${var.environment}"
+  image_tag_mutability = "MUTABLE"
 
-# --- LÓGICA LOCAL ---
-locals {
-  log_group_exists = length(data.aws_cloudwatch_log_groups.existing_log_groups.log_group_names) > 0
-  log_group_name   = local.log_group_exists ? tolist(data.aws_cloudwatch_log_groups.existing_log_groups.log_group_names)[0] : aws_cloudwatch_log_group.sojoga_backend_logs[0].name
-}
-
-# --- RECURSO DE LOGS ---
-resource "aws_cloudwatch_log_group" "sojoga_backend_logs" {
-  count             = local.log_group_exists ? 0 : 1
-  name              = "/ecs/sojoga-backend-${var.environment}"
-  retention_in_days = 7
+  image_scanning_configuration {
+    scan_on_push = true
+  }
 
   tags = {
-    Project     = var.project_name
     Environment = var.environment
+    Project     = var.project_name
   }
 }
 
-# 1. Repositórios de Imagens Docker (ECR)
-resource "aws_ecr_repository" "sojoga_backend_repo" {
-  name = "sojoga-backend-${var.environment}"
-  tags = {
-    Project     = var.project_name
-    Environment = var.environment
-  }
-}
+resource "aws_ecr_repository" "frontend" {
+  name                 = "${var.project_name}-frontend-${var.environment}"
+  image_tag_mutability = "MUTABLE"
 
-resource "aws_ecr_repository" "sojoga_frontend_repo" {
-  name = "sojoga-frontend-${var.environment}"
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
   tags = {
-    Project     = var.project_name
     Environment = var.environment
+    Project     = var.project_name
   }
 }
 
 # 2. Cluster ECS
-resource "aws_ecs_cluster" "sojoga_cluster" {
-  name = "sojoga-cluster-${var.environment}"
+resource "aws_ecs_cluster" "main" {
+  name = "${var.project_name}-cluster-${var.environment}"
+
   tags = {
-    Project     = var.project_name
     Environment = var.environment
+    Project     = var.project_name
   }
 }
 
-# 3. Definições de Tarefa ECS
-resource "aws_ecs_task_definition" "sojoga_backend_task" {
-  family                   = "sojoga-backend-${var.environment}-task"
+# 3. IAM Role para Execução da Tarefa ECS
+resource "aws_iam_role" "ecs_task_execution_role" {
+  name = "${var.project_name}-ecs-task-execution-role-${var.environment}"
+
+  assume_role_policy = jsonencode({
+    Version   = "2012-10-17"
+    Statement = [
+      {
+        Action    = "sts:AssumeRole"
+        Effect    = "Allow"
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+# Permissão para a task ler o segredo JWT
+resource "aws_iam_role_policy" "read_jwt_secret" {
+  name = "${var.project_name}-read-jwt-secret-policy-${var.environment}"
+  role = aws_iam_role.ecs_task_execution_role.id
+
+  policy = jsonencode({
+    Version   = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["secretsmanager:GetSecretValue"]
+        Resource = [var.jwt_secret_arn]
+      }
+    ]
+  })
+}
+
+# 4. Security Group para os contêineres
+resource "aws_security_group" "ecs_tasks" {
+  name        = "sg-ecs-tasks-${var.environment}"
+  description = "Permite tráfego para os contêineres ECS"
+  vpc_id      = var.vpc_id
+
+  # Permite tráfego de entrada do Load Balancer na porta da aplicação
+  ingress {
+    protocol        = "tcp"
+    from_port       = 8080
+    to_port         = 8080
+    security_groups = [var.lb_security_group_id]
+  }
+
+  # Permite todo o tráfego de saída
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "sg-ecs-tasks-${var.environment}"
+    Environment = var.environment
+    Project     = var.project_name
+  }
+}
+
+# 5. Definição da Tarefa (Task Definition) para o Backend
+resource "aws_ecs_task_definition" "backend" {
+  family                   = "${var.project_name}-backend-task-${var.environment}"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = "256"
-  memory                   = "512"
-
-  execution_role_arn = var.ecs_task_execution_role_arn
-  task_role_arn      = var.ecs_task_role_arn
+  cpu                      = "256"  # 0.25 vCPU
+  memory                   = "512"  # 512 MB
+  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
 
   container_definitions = jsonencode([
     {
       name      = "sojoga-backend-container"
-      image     = "${aws_ecr_repository.sojoga_backend_repo.repository_url}:latest"
-      cpu       = 256
-      memory    = 512
+      image     = "${aws_ecr_repository.backend.repository_url}:latest" # Usará a imagem mais recente
       essential = true
       portMappings = [
         {
-          containerPort = 8787
-          hostPort      = 8787
+          containerPort = 8080
+          hostPort      = 8080
         }
       ]
-      logConfiguration = {
-        logDriver = "awslogs",
-        options = {
-          "awslogs-group"         = local.log_group_name,
-          "awslogs-region"        = "sa-east-1",
-          "awslogs-stream-prefix" = "ecs"
-        }
-      },
-      environment = [
-        {
-          name  = "SPRING_PROFILES_ACTIVE",
-          value = "prod"
-        },
-        {
-          name  = "DYNAMODB_USER_TABLE_NAME",
-          value = var.user_table_name
-        },
-        {
-          name  = "DYNAMODB_CAMPEONATO_TABLE_NAME",
-          value = var.campeonato_table_name
-        },
-        {
-          name = "CORS_ALLOWED_ORIGINS",
-          value = "*"
-        }
-      ],
       secrets = [
         {
-          name      = "JWT_SECRET",
+          name      = "JWT_SECRET"
           valueFrom = var.jwt_secret_arn
         }
       ]
-    }
-  ])
-
-  tags = {
-    Project     = var.project_name
-    Environment = var.environment
-  }
-}
-
-resource "aws_ecs_task_definition" "sojoga_frontend_task" {
-  family                   = "sojoga-frontend-${var.environment}-task"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = "256"
-  memory                   = "512"
-
-  execution_role_arn = var.ecs_task_execution_role_arn
-
-  container_definitions = jsonencode([
-    {
-      name      = "sojoga-frontend-container"
-      image     = "${aws_ecr_repository.sojoga_frontend_repo.repository_url}:latest"
-      cpu       = 256
-      memory    = 512
-      essential = true
-      portMappings = [
-        {
-          containerPort = 80
-          hostPort      = 80
-        }
-      ]
       logConfiguration = {
-        logDriver = "awslogs",
+        logDriver = "awslogs"
         options = {
-          "awslogs-group"         = "/ecs/sojoga-frontend-${var.environment}",
-          "awslogs-region"        = "sa-east-1",
+          "awslogs-group"         = "/ecs/${var.project_name}-backend"
+          "awslogs-region"        = "sa-east-1" # Pode ser uma variável
           "awslogs-stream-prefix" = "ecs"
         }
       }
@@ -148,97 +146,44 @@ resource "aws_ecs_task_definition" "sojoga_frontend_task" {
   ])
 
   tags = {
-    Project     = var.project_name
     Environment = var.environment
+    Project     = var.project_name
   }
 }
 
-# Grupos de segurança para os serviços ECS
-resource "aws_security_group" "ecs_backend_service_sg" {
-  name        = "ecs-backend-sg-${var.project_name}-${var.environment}"
-  description = "Allow inbound traffic from the ALB to backend"
-  vpc_id      = var.vpc_id
-
-  ingress {
-    from_port       = 8787
-    to_port         = 8787
-    protocol        = "tcp"
-    security_groups = [var.lb_security_group_id]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-resource "aws_security_group" "ecs_frontend_service_sg" {
-  name        = "ecs-frontend-sg-${var.project_name}-${var.environment}"
-  description = "Allow inbound traffic from the ALB to frontend"
-  vpc_id      = var.vpc_id
-
-  ingress {
-    from_port       = 80
-    to_port         = 80
-    protocol        = "tcp"
-    security_groups = [var.lb_security_group_id]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-# 4. Serviços ECS
+# 6. Serviço ECS para o Backend
 resource "aws_ecs_service" "backend" {
-  name            = "sojoga-backend-prod-service"
-  cluster         = aws_ecs_cluster.sojoga_cluster.id
-  task_definition = aws_ecs_task_definition.sojoga_backend_task.arn
-  desired_count   = 1
+  name            = "${var.project_name}-backend-service-${var.environment}"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.backend.arn
+  desired_count   = 1 # Inicia com 1 instância da aplicação
   launch_type     = "FARGATE"
 
-  lifecycle {
-    create_before_destroy = true
-  }
-
   network_configuration {
-    subnets         = var.subnet_ids
-    security_groups = [aws_security_group.ecs_backend_service_sg.id]
-    assign_public_ip = true
+    subnets          = var.public_subnet_ids
+    security_groups  = [aws_security_group.ecs_tasks.id]
+    assign_public_ip = true # Necessário para puxar a imagem do ECR em sub-redes públicas
   }
 
   load_balancer {
-    target_group_arn = var.backend_target_group_arn
+    target_group_arn = var.target_group_arn
     container_name   = "sojoga-backend-container"
-    container_port   = 8787
+    container_port   = 8080
+  }
+
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
   }
 }
 
-resource "aws_ecs_service" "frontend" {
-  name            = "sojoga-frontend-prod-service"
-  cluster         = aws_ecs_cluster.sojoga_cluster.id
-  task_definition = aws_ecs_task_definition.sojoga_frontend_task.arn
-  desired_count   = 1
-  launch_type     = "FARGATE"
+# 7. Grupo de Logs para o serviço
+resource "aws_cloudwatch_log_group" "backend" {
+  name              = "/ecs/${var.project_name}-backend"
+  retention_in_days = 7
 
-  lifecycle {
-    create_before_destroy = true
-  }
-
-  network_configuration {
-    subnets         = var.subnet_ids
-    security_groups = [aws_security_group.ecs_frontend_service_sg.id]
-    assign_public_ip = true
-  }
-
-  load_balancer {
-    target_group_arn = var.frontend_target_group_arn
-    container_name   = "sojoga-frontend-container"
-    container_port   = 80
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
   }
 }

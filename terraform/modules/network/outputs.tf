@@ -7,5 +7,5 @@ output "vpc_id" {
 
 output "public_subnet_ids" {
   description = "A lista de IDs das sub-redes públicas."
-  value       = local.subnet_ids # Mantém a consistência com o uso em compute.tf
+  value       = local.subnet_ids
 }
