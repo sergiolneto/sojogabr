@@ -22,8 +22,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Passo 2: Cria o Pull Request
-      - name: Create Pull Request if one does not exist
+      # Passo 2: Garante que a label 'automação' exista
+      - name: Create label if it does not exist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create "automação" --description "Pull requests criados por automação" --color "f29513" || echo "Label 'automação' já existe."
+
+      # Passo 3: Cria o Pull Request
+      - name: Create Pull Request if none exists
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
