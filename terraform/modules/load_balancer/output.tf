@@ -1,4 +1,4 @@
-# terraform/modules/load_balancer/output.tf
+# terraform/modules/load_balancer/outputs.tf
 
 output "backend_target_group_arn" {
   description = "O ARN do Target Group para o serviço de backend."

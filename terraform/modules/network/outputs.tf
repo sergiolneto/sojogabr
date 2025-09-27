@@ -1,4 +1,4 @@
-# terraform/modules/network/output.tf
+# terraform/modules/network/outputs.tf
 
 output "vpc_id" {
   description = "O ID da VPC (existente ou recém-criada)."
