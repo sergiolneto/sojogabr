@@ -1,4 +1,4 @@
-# terraform/modules/dynamodb/output.tf
+# terraform/modules/dynamodb/outputs.tf
 
 output "user_table_name" {
   description = "O nome da tabela de usuários do DynamoDB."
