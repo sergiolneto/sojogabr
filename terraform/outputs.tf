@@ -1,8 +1,8 @@
 # terraform/outputs.tf
 
 output "name_servers" {
-  description = "Name servers para a zona hospedada do Route 53. Configure estes valores no seu registrador de domínio."
-  value       = aws_route53_zone.main.name_servers
+  description = "Mapa de domínios para seus respectivos Name Servers. Configure estes valores no seu registrador de domínio para cada domínio."
+  value       = { for k, v in aws_route53_zone.main : k => v.name_servers }
 }
 
 output "backend_ecr_repository_url" {

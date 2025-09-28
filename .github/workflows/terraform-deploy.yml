@@ -33,8 +33,9 @@ jobs:
       url: 'https://sojogabr.qzz.io' # URL do ambiente de produção
 
     env:
-      JWT_SECRET_ARN: ${{ secrets.JWT_SECRET_ARN }}
       TF_VAR_domain_names: '["sojogabr.eu.org", "sojogabr.qzz.io", "sojogabr.dpdns.org", "sojoga.eu.org"]'
+      TF_VAR_environment: 'prod'
+      TF_VAR_jwt_secret_arn: ${{ secrets.JWT_SECRET_ARN }}
 
     defaults:
       run:
@@ -75,7 +76,7 @@ jobs:
           ../.github/scripts/import_resources.sh "$TF_PATH"
 
       - name: 'Terraform Plan'
-        run: terraform plan -var="environment=prod" -var="jwt_secret_arn=${{ env.JWT_SECRET_ARN }}" -out=tfplan
+        run: terraform plan -out=tfplan
 
       - name: 'Terraform Apply'
         run: terraform apply -auto-approve tfplan
@@ -91,8 +92,9 @@ jobs:
       name: producao
 
     env:
-      JWT_SECRET_ARN: ${{ secrets.JWT_SECRET_ARN }}
       TF_VAR_domain_names: '["sojogabr.eu.org", "sojogabr.qzz.io", "sojogabr.dpdns.org", "sojoga.eu.org"]'
+      TF_VAR_environment: 'prod'
+      TF_VAR_jwt_secret_arn: ${{ secrets.JWT_SECRET_ARN }}
 
     defaults:
       run:
@@ -120,4 +122,4 @@ jobs:
         run: terraform workspace select -or-create prod
 
       - name: 'Terraform Destroy'
-        run: terraform destroy -auto-approve -var="environment=prod" -var="jwt_secret_arn=${{ env.JWT_SECRET_ARN }}"
+        run: terraform destroy -auto-approve
