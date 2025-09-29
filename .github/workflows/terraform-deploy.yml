@@ -33,7 +33,7 @@ jobs:
       url: 'https://sojogabr.qzz.io' # URL do ambiente de produção
 
     env:
-      TF_VAR_domain_names: '["sojogabr.eu.org", "sojogabr.qzz.io", "sojogabr.dpdns.org", "sojoga.eu.org"]'
+      TF_VAR_domain_names: '["sojogabr.eu.org", "sojogabr.qzz.io", "sojogabr.dpdns.org"]'
       TF_VAR_environment: 'prod'
       TF_VAR_jwt_secret_arn: ${{ secrets.JWT_SECRET_ARN }}
 
@@ -92,7 +92,7 @@ jobs:
       name: producao
 
     env:
-      TF_VAR_domain_names: '["sojogabr.eu.org", "sojogabr.qzz.io", "sojogabr.dpdns.org", "sojoga.eu.org"]'
+      TF_VAR_domain_names: '["sojogabr.eu.org", "sojogabr.qzz.io", "sojogabr.dpdns.org"]'
       TF_VAR_environment: 'prod'
       TF_VAR_jwt_secret_arn: ${{ secrets.JWT_SECRET_ARN }}
 
