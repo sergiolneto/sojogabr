@@ -8,14 +8,15 @@ on:
     branches:
       - develop
 
+permissions:
+  contents: write          # Necessário para o token ter permissões de escrita no repositório
+  pull-requests: write   # Necessário para criar o Pull Request (gh pr create)
+
 jobs:
   create-pull-request:
     # Esta condição garante que o job só execute se o workflow anterior foi bem-sucedido
     if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    permissions:
-      contents: read          # Necessário para a ação de checkout (actions/checkout)
-      pull-requests: write   # Necessário para criar o Pull Request (gh pr create)
 
     steps:
       # Passo 1: Faz o checkout do código
