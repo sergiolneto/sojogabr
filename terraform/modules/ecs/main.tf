@@ -93,7 +93,7 @@ resource "aws_security_group" "ecs_tasks" {
     security_groups = [var.lb_security_group_id]
   }
 
-  # Permite todo o tráfego de saída
+  # Permite todos o tráfego de saída
   egress {
     from_port   = 0
     to_port     = 0

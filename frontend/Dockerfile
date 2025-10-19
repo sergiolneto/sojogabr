@@ -1,5 +1,5 @@
 # Como o frontend é composto por arquivos estáticos (HTML, CSS, JS) que não precisam de um passo de "build",
-# podemos usar uma imagem Nginx diretamente e pular todo o estágio de build com Node.js.
+# podemos usar uma imagem Nginx diretamente e pular todos o estágio de build com Node.js.
 # Isso torna a construção da imagem muito mais rápida e simples.
 
 # Estágio 1: Servir os arquivos estáticos com Nginx

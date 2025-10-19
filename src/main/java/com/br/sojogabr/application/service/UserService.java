@@ -75,7 +75,7 @@ public class UserService implements UserUseCase, UserDetailsService {
 
     @Override
     public User approveUser(String username) {
-        User userToApprove = findByUsername(username); // Reusa o método que já lança exceção se não encontrar
+        User userToApprove = findByUsername(username); // Reusa o métodos que já lança exceção se não encontrar
         userToApprove.setStatus(User.UserStatus.ACTIVE);
         return userRepository.save(userToApprove);
     }

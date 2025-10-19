@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Só Joga</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/sweetalert2.min.css">
+    <link rel="icon" type="image/png" href="img/So Joga.png">
+</head>
+<body>
+    <header class="navbar">
+        <div class="logo">
+            <img src="img/So Joga.png" alt="Só Joga">
+        </div>
+        <nav class="menu">
+            <ul>
+                <li><a href="/">Página Inicial</a></li>
+                <li><a href="#">Admin</a></li>
+                <li><a href="#" id="logout-link">Logout</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h1>Área do Administrador</h1>
+
+        <section id="create-champ">
+            <h2>Criar Campeonato</h2>
+            <form id="create-champ-form">
+                <div class="form-group">
+                    <label for="champ-name">Nome</label>
+                    <input id="champ-name" name="name" required />
+                </div>
+                <div class="form-group">
+                    <label for="champ-sport">Esporte</label>
+                    <input id="champ-sport" name="sport" required />
+                </div>
+                <div class="form-group">
+                    <label for="champ-teams">IDs dos Times (vírgula separados)</label>
+                    <input id="champ-teams" name="teams" placeholder="FLA,PAL,..." required />
+                </div>
+                <button type="submit">Criar Campeonato</button>
+            </form>
+        </section>
+
+        <section id="manage-users">
+            <h2>Gerenciar Usuários Pendentes</h2>
+            <div id="pending-users-list">Carregando...</div>
+        </section>
+    </main>
+
+    <script src="static/js/sweetalert2.all.min.js"></script>
+    <script src="static/js/admin.js" defer></script>
+</body>
+</html>
