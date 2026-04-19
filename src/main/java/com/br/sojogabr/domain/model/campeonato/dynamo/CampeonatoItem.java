@@ -2,9 +2,9 @@ package com.br.sojogabr.domain.model.campeonato.dynamo;
 
 import com.br.sojogabr.domain.model.campeonato.StatusCampeonato;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
@@ -17,17 +17,34 @@ import java.time.LocalDate;
  * 2. Link para um Time (SK = TEAM#<teamId>)
  * 3. Classificação de um Time (SK = STANDINGS#<teamId>)
  */
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @DynamoDbBean
 public class CampeonatoItem {
 
-    @Getter(onMethod_ = @DynamoDbPartitionKey)
     private String pk; // Formato: CHAMP#<champId>
 
-    @Getter(onMethod_ = @DynamoDbSortKey)
     private String sk; // Formato: METADATA, TEAM#<teamId>, ou STANDINGS#<teamId>
+
+    @DynamoDbPartitionKey
+    public String getPk() {
+        return pk;
+    }
+
+    public void setPk(String pk) {
+        this.pk = pk;
+    }
+
+    @DynamoDbSortKey
+    public String getSk() {
+        return sk;
+    }
+
+    public void setSk(String sk) {
+        this.sk = sk;
+    }
 
     // Atributos para SK=METADATA
     private String nome;

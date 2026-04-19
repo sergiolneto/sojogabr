@@ -1,5 +1,5 @@
 # Estágio 1: Build da aplicação com Maven
-FROM maven:3.9.6-eclipse-temurin-17 AS build
+FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /app
 
 # Copia o pom.xml para aproveitar o cache do Docker e baixar as dependências
@@ -18,7 +18,7 @@ RUN mvn package -DskipTests
 RUN ls -l /app/target
 
 # Estágio 2: Cria a imagem final com o JRE para um tamanho menor
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 
 # Instala o curl, que é necessário para o comando do healthcheck no docker-compose.yml
 RUN apk add --no-cache curl

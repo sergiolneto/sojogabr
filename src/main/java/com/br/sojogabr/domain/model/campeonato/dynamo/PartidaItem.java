@@ -3,7 +3,6 @@ package com.br.sojogabr.domain.model.campeonato.dynamo;
 import com.br.sojogabr.domain.model.campeonato.StatusPartida;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
@@ -22,11 +21,27 @@ import java.time.LocalDateTime;
 @DynamoDbBean
 public class PartidaItem {
 
-    @Getter(onMethod_ = @DynamoDbPartitionKey)
     private String pk;
 
-    @Getter(onMethod_ = @DynamoDbSortKey)
     private String sk;
+
+    @DynamoDbPartitionKey
+    public String getPk() {
+        return pk;
+    }
+
+    public void setPk(String pk) {
+        this.pk = pk;
+    }
+
+    @DynamoDbSortKey
+    public String getSk() {
+        return sk;
+    }
+
+    public void setSk(String sk) {
+        this.sk = sk;
+    }
 
     // Atributos para SK=MATCH#...
     private String timeCasaId; // Formato: TEAM#<teamId>

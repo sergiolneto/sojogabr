@@ -1,8 +1,9 @@
 package com.br.sojogabr.domain.model;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,7 +13,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @DynamoDbBean
@@ -98,4 +100,11 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return this.status == UserStatus.ACTIVE;
     }
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
+
 }
