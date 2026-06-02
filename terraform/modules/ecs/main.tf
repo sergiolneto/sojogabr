@@ -128,6 +128,20 @@ resource "aws_ecs_task_definition" "backend" {
           hostPort      = 8080
         }
       ]
+      environment = [
+        {
+          name  = "SPRING_DATA_REDIS_HOST"
+          value = var.redis_endpoint
+        },
+        {
+          name  = "SPRING_DATA_REDIS_PORT"
+          value = "6379"
+        },
+        {
+          name  = "SPRING_CACHE_TYPE"
+          value = "redis"
+        }
+      ]
       secrets = [
         {
           name      = "JWT_SECRET"

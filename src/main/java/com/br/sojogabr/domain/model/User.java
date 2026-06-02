@@ -20,6 +20,15 @@ import java.util.List;
 @DynamoDbBean
 public class User implements UserDetails {
 
+    public static final String PK = "pk";
+    public static final String SK = "sk";
+    public static final String USERNAME = "username";
+    public static final String STATUS = "status";
+    public static final String NOME = "nome";
+    public static final String EMAIL = "email";
+    public static final String ID = "id";
+    public static final String ESPORTES = "esportes";
+
     // Enums movidos para dentro da classe e tornados públicos para acesso externo
     public enum UserRole {
         USER,

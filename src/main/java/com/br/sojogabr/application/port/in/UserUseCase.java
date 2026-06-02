@@ -1,5 +1,6 @@
 package com.br.sojogabr.application.port.in;
 
+import com.br.sojogabr.api.dto.PaginatedResponse;
 import com.br.sojogabr.api.dto.RegisterRequest;
 import com.br.sojogabr.domain.model.User;
 
@@ -18,6 +19,11 @@ public interface UserUseCase {
      * @return Uma lista de usuários pendentes.
      */
     List<User> findPendingUsers();
+
+    /**
+     * Encontra usuários pendentes com paginação.
+     */
+    PaginatedResponse<User> findPendingUsersPaginated(Integer limit, String lastKey);
 
     /**
      * Aprova um usuário, mudando seu status para ACTIVE.

@@ -10,4 +10,5 @@ module "ecs" {
   target_group_arn = aws_lb_target_group.main.arn
   jwt_secret_arn   = var.jwt_secret_arn
   lb_security_group_id = aws_security_group.lb.id
+  redis_endpoint   = module.cache.redis_endpoint
 }

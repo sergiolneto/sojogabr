@@ -31,6 +31,14 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         <dependency>
@@ -50,12 +58,6 @@
         <dependency>
             <groupId>io.awspring.cloud</groupId>
             <artifactId>spring-cloud-aws-starter-dynamodb</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-logging</groupId>
-                    <artifactId>commons-logging</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
@@ -94,19 +96,20 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-testcontainers</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>localstack</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
     <dependencyManagement>
@@ -121,7 +124,7 @@
             <dependency>
                 <groupId>org.testcontainers</groupId>
                 <artifactId>testcontainers-bom</artifactId>
-                <version>1.19.8</version>
+                <version>1.20.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -180,6 +183,16 @@
                         -XX:+EnableDynamicAgentLoading
                         ${argLine}
                     </argLine>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.graalvm.buildtools</groupId>
+                <artifactId>native-maven-plugin</artifactId>
+                <configuration>
+                    <buildArgs>
+                        <arg>--initialize-at-build-time=org.apache.commons.logging.LogFactory,org.apache.commons.logging.LogFactoryService,org.apache.commons.logging.impl.LogFactoryImpl,org.apache.commons.logging.impl.Jdk14Logger</arg>
+                        <arg>--initialize-at-build-time=io.jsonwebtoken.security.Keys,io.jsonwebtoken.impl.security.KeysBridge</arg>
+                    </buildArgs>
                 </configuration>
             </plugin>
             <plugin>

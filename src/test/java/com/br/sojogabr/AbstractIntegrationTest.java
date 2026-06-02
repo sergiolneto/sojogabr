@@ -14,9 +14,13 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeDefinition;
 import software.amazon.awssdk.services.dynamodb.model.CreateTableRequest;
+import software.amazon.awssdk.services.dynamodb.model.GlobalSecondaryIndex;
 import software.amazon.awssdk.services.dynamodb.model.KeySchemaElement;
 import software.amazon.awssdk.services.dynamodb.model.KeyType;
+import software.amazon.awssdk.services.dynamodb.model.Projection;
+import software.amazon.awssdk.services.dynamodb.model.ProjectionType;
 import software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughput;
+import software.amazon.awssdk.services.dynamodb.model.ResourceInUseException;
 import software.amazon.awssdk.services.dynamodb.model.ScalarAttributeType;
 
 import java.time.Duration;
@@ -62,12 +66,20 @@ public abstract class AbstractIntegrationTest {
                     .build();
 
             // Cria as tabelas necessárias para os testes de integração
-            client.createTable(createUserTableRequest());
-            client.createTable(createCampeonatoTableRequest());
+            createTableIfAbsent(client, createUserTableRequest());
+            createTableIfAbsent(client, createCampeonatoTableRequest());
 
             System.out.println("Tabelas 'Usuario' e 'SojogaBrTable' criadas para os testes.");
 
             return client;
+        }
+
+        private void createTableIfAbsent(DynamoDbClient client, CreateTableRequest request) {
+            try {
+                client.createTable(request);
+            } catch (ResourceInUseException e) {
+                System.out.println("Tabela '" + request.tableName() + "' ja existe para os testes.");
+            }
         }
 
         @Bean
@@ -80,8 +92,30 @@ public abstract class AbstractIntegrationTest {
         private CreateTableRequest createUserTableRequest() {
             return CreateTableRequest.builder()
                     .tableName("Usuario")
-                    .keySchema(KeySchemaElement.builder().attributeName("id").keyType(KeyType.HASH).build())
-                    .attributeDefinitions(AttributeDefinition.builder().attributeName("id").attributeType(ScalarAttributeType.S).build())
+                    .keySchema(
+                            KeySchemaElement.builder().attributeName("pk").keyType(KeyType.HASH).build(),
+                            KeySchemaElement.builder().attributeName("sk").keyType(KeyType.RANGE).build()
+                    )
+                    .attributeDefinitions(
+                            AttributeDefinition.builder().attributeName("pk").attributeType(ScalarAttributeType.S).build(),
+                            AttributeDefinition.builder().attributeName("sk").attributeType(ScalarAttributeType.S).build(),
+                            AttributeDefinition.builder().attributeName("username").attributeType(ScalarAttributeType.S).build(),
+                            AttributeDefinition.builder().attributeName("status").attributeType(ScalarAttributeType.S).build()
+                    )
+                    .globalSecondaryIndexes(
+                            GlobalSecondaryIndex.builder()
+                                    .indexName("username-index")
+                                    .keySchema(KeySchemaElement.builder().attributeName("username").keyType(KeyType.HASH).build())
+                                    .projection(Projection.builder().projectionType(ProjectionType.ALL).build())
+                                    .provisionedThroughput(ProvisionedThroughput.builder().readCapacityUnits(5L).writeCapacityUnits(5L).build())
+                                    .build(),
+                            GlobalSecondaryIndex.builder()
+                                    .indexName("status-index")
+                                    .keySchema(KeySchemaElement.builder().attributeName("status").keyType(KeyType.HASH).build())
+                                    .projection(Projection.builder().projectionType(ProjectionType.ALL).build())
+                                    .provisionedThroughput(ProvisionedThroughput.builder().readCapacityUnits(5L).writeCapacityUnits(5L).build())
+                                    .build()
+                    )
                     .provisionedThroughput(ProvisionedThroughput.builder().readCapacityUnits(5L).writeCapacityUnits(5L).build())
                     .build();
         }

@@ -1,26 +1,20 @@
-# Estágio 1: Build da aplicação com Maven
-FROM maven:3.9.6-eclipse-temurin-21 AS build
+# Estágio 1: Build da aplicação com Maven e JDK padrão
+FROM eclipse-temurin:21-jdk-alpine AS build
 WORKDIR /app
 
-# Copia o pom.xml para aproveitar o cache do Docker e baixar as dependências
-# apenas quando o pom.xml for alterado.
-COPY pom.xml .
-RUN mvn dependency:go-offline
+# Copia todo o projeto para o container
+COPY . .
 
-# Copia o restante do código-fonte
-COPY src ./src
+# Garante permissão de execução para o Maven Wrapper
+RUN chmod +x mvnw
 
-# Compila o projeto e cria o pacote JAR
-RUN mvn package -DskipTests
+# Compila a aplicação gerando o JAR padrão
+RUN ./mvnw clean package -DskipTests
 
-# --- ETAPA DE DEBUG ---
-# Lista o conteúdo do diretório target para verificar o nome do JAR no log do build.
-RUN ls -l /app/target
-
-# Estágio 2: Cria a imagem final com o JRE para um tamanho menor
+# Estágio 2: Imagem de execução com JRE
 FROM eclipse-temurin:21-jre-alpine
 
-# Instala o curl, que é necessário para o comando do healthcheck no docker-compose.yml
+# Instala o curl para o healthcheck
 RUN apk add --no-cache curl
 
 # Cria um usuário e grupo específicos para a aplicação
@@ -28,15 +22,16 @@ RUN addgroup -S sojoga && adduser -S sojoga -G sojoga
 
 WORKDIR /app
 
-# Copia o JAR compilado do estágio de build
-# Copia o JAR usando o nome final definido no pom.xml ('app.jar'),
-# tornando o Dockerfile mais robusto e consistente com o build.
-COPY --from=build /app/target/app.jar app.jar
+# Copia o JAR gerado no estágio anterior
+COPY --from=build /app/target/*.jar app.jar
 
-# Define o novo usuário como proprietário do arquivo
+# Define o novo usuário como proprietário do JAR
 RUN chown sojoga:sojoga app.jar
 
-EXPOSE 8080
+EXPOSE 8787
+
 # Troca para o usuário não-root antes de iniciar a aplicação
 USER sojoga
-ENTRYPOINT ["java","-jar","app.jar"]
+
+# Inicia a aplicação usando a JVM
+ENTRYPOINT ["java", "-jar", "app.jar"]

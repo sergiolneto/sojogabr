@@ -9,19 +9,28 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 
+/**
+ * Cria os beans DynamoDbTable necessários para o mapeamento das entidades.
+ * Sem esses beans, o contêiner de DI do Spring não consegue satisfazer as
+ * injeções por construtor presentes em UserRepository, DynamoDbCampeonatoRepository,
+ * DynamoDbInitializer, CampeonatoService e ChampionshipEventListener.
+ */
 @Configuration
 public class DynamoDbConfig {
 
+    @Value("${aws.dynamodb.user-tableName:Usuario}")
+    private String userTableName;
+
+    @Value("${aws.dynamodb.campeonato-tableName:SojogaBrTable}")
+    private String campeonatoTableName;
+
     @Bean
-    public DynamoDbTable<User> userTable(DynamoDbEnhancedClient enhancedClient,
-                                         @Value("${aws.dynamodb.user-tableName}") String tableName) {
-        return enhancedClient.table(tableName, TableSchema.fromBean(User.class));
+    public DynamoDbTable<User> userTable(DynamoDbEnhancedClient enhancedClient) {
+        return enhancedClient.table(userTableName, TableSchema.fromBean(User.class));
     }
 
     @Bean
-    public DynamoDbTable<CampeonatoItem> campeonatoTable(DynamoDbEnhancedClient enhancedClient,
-                                                         @Value("${aws.dynamodb.campeonato-tableName}") String tableName) {
-        return enhancedClient.table(tableName, TableSchema.fromBean(CampeonatoItem.class));
+    public DynamoDbTable<CampeonatoItem> campeonatoTable(DynamoDbEnhancedClient enhancedClient) {
+        return enhancedClient.table(campeonatoTableName, TableSchema.fromBean(CampeonatoItem.class));
     }
-
 }

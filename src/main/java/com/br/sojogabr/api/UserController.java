@@ -5,6 +5,7 @@ import com.br.sojogabr.api.dto.UserResponse;
 import com.br.sojogabr.application.port.in.UserUseCase;
 import com.br.sojogabr.domain.model.User;
 import jakarta.validation.Valid;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +39,7 @@ public class UserController {
     }
 
     @GetMapping("/{username}")
+    @Cacheable(value = "users", key = "#username")
     public ResponseEntity<UserResponse> getUserByUsername(@PathVariable String username) {
         return userUseCase.findByUsernameOptional(username)
                 .map(UserResponse::fromEntity)

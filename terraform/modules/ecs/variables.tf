@@ -35,3 +35,8 @@ variable "lb_security_group_id" {
   description = "O ID do Security Group do Load Balancer."
   type        = string
 }
+
+variable "redis_endpoint" {
+  description = "The endpoint of the Redis cluster"
+  type        = string
+}

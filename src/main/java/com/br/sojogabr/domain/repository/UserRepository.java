@@ -5,9 +5,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.enhanced.dynamodb.*;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -49,17 +53,24 @@ public class UserRepository {
 
     /**
      * Encontra todos os usuários com um determinado status usando o GSI 'status-index'.
-     * @param status O status do usuário a ser pesquisado.
-     * @return Uma lista de usuários que correspondem ao status.
      */
     public List<User> findByStatus(User.UserStatus status) {
-        // O valor da chave de partição para o GSI é o nome do enum (String)
-        QueryConditional queryConditional = QueryConditional.keyEqualTo(k -> k.partitionValue(status.name()));
-        logger.info("Consultando o índice 'status-index' para o status: {}", status);
+        Page<User> firstPage = findByStatusPaginated(status, 100, null);
+        return firstPage.items();
+    }
 
-        // Executa a query no índice e coleta os resultados em uma lista
-        return this.statusIndex.query(queryConditional).stream()
-                .flatMap(page -> page.items().stream())
-                .collect(Collectors.toList());
+    /**
+     * Busca paginada por status.
+     */
+    public Page<User> findByStatusPaginated(User.UserStatus status, Integer limit, Map<String, AttributeValue> exclusiveStartKey) {
+        QueryConditional queryConditional = QueryConditional.keyEqualTo(k -> k.partitionValue(status.name()));
+        
+        QueryEnhancedRequest request = QueryEnhancedRequest.builder()
+                .queryConditional(queryConditional)
+                .limit(limit)
+                .exclusiveStartKey(exclusiveStartKey)
+                .build();
+
+        return this.statusIndex.query(request).iterator().next();
     }
 }

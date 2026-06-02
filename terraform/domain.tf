@@ -45,7 +45,7 @@ resource "aws_acm_certificate_validation" "main" {
   region                  = "sa-east-1"
 }
 
-# Cria um registro 'A' em CADA zona para apontar para o mesmo Load Balancer
+# Cria um registro 'A' em CADA zona para apontar para o CloudFront (CDN)
 resource "aws_route53_record" "app" {
   for_each = aws_route53_zone.main
 
@@ -54,8 +54,8 @@ resource "aws_route53_record" "app" {
   type    = "A"
 
   alias {
-    name                   = aws_lb.main.dns_name
-    zone_id                = aws_lb.main.zone_id
-    evaluate_target_health = true
+    name                   = module.cdn.cloudfront_domain_name
+    zone_id                = module.cdn.cloudfront_hosted_zone_id
+    evaluate_target_health = false
   }
 }

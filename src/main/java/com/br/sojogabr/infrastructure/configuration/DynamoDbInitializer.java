@@ -36,12 +36,18 @@ public class DynamoDbInitializer implements CommandLineRunner {
     private void createUserTable() {
         try {
             logger.info("Verificando e criando a tabela '{}' no DynamoDB (Usuário)...", userTable.tableName());
-            EnhancedGlobalSecondaryIndex gsi = EnhancedGlobalSecondaryIndex.builder()
+            EnhancedGlobalSecondaryIndex usernameIndex = EnhancedGlobalSecondaryIndex.builder()
                     .indexName("username-index")
                     .projection(p -> p.projectionType(ProjectionType.ALL))
                     .build();
-            userTable.createTable(r -> r.globalSecondaryIndices(gsi));
-            logger.info("Tabela '{}' e GSI 'username-index' criados com sucesso.", userTable.tableName());
+
+            EnhancedGlobalSecondaryIndex statusIndex = EnhancedGlobalSecondaryIndex.builder()
+                    .indexName("status-index")
+                    .projection(p -> p.projectionType(ProjectionType.ALL))
+                    .build();
+
+            userTable.createTable(r -> r.globalSecondaryIndices(usernameIndex, statusIndex));
+            logger.info("Tabela '{}' e GSIs 'username-index'/'status-index' criados com sucesso.", userTable.tableName());
         } catch (ResourceInUseException e) {
             logger.info("A tabela Usuário '{}' já existe. Nenhuma ação necessária.", userTable.tableName());
         }

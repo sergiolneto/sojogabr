@@ -14,17 +14,17 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.model.EnhancedGlobalSecondaryIndex;
-import software.amazon.awssdk.services.dynamodb.model.ProjectionType;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@Testcontainers // Adicionada para ativar o @DynamicPropertySource
+@Testcontainers
 @Import(AbstractIntegrationTest.DynamoDbTestConfig.class)
 class UserRepositoryTest extends AbstractIntegrationTest {
 
@@ -39,18 +39,6 @@ class UserRepositoryTest extends AbstractIntegrationTest {
     @BeforeEach
     void setUp() {
         userTable = enhancedClient.table("Usuario", TableSchema.fromBean(User.class));
-        try {
-            userTable.deleteTable();
-        } catch (Exception e) {
-            // Ignora caso a tabela não exista
-        }
-
-        EnhancedGlobalSecondaryIndex gsi = EnhancedGlobalSecondaryIndex.builder()
-                .indexName("username-index")
-                .projection(p -> p.projectionType(ProjectionType.ALL))
-                .build();
-
-        userTable.createTable(r -> r.globalSecondaryIndices(gsi));
     }
 
     private User createUser(String username, String nome) {
@@ -61,20 +49,19 @@ class UserRepositoryTest extends AbstractIntegrationTest {
         user.setUsername(username);
         user.setPassword("password");
         user.setNome(nome);
+        user.setStatus(User.UserStatus.ACTIVE);
+        user.setRole(User.UserRole.USER);
         return user;
     }
 
     @Test
-    @DisplayName("Deve salvar um usuário e permitir busca por username")
+    @DisplayName("Deve salvar um usuario e permitir busca por username")
     void save_shouldSaveUserAndAllowFindByUsername() {
-        // Arrange
-        String username = "testuser";
+        String username = "testuser-" + UUID.randomUUID();
         User user = createUser(username, "Test User");
 
-        // Act
         userRepository.save(user);
 
-        // Assert
         Optional<User> foundUserOpt = userRepository.findByUsername(username);
 
         assertThat(foundUserOpt).isPresent();
@@ -83,7 +70,6 @@ class UserRepositoryTest extends AbstractIntegrationTest {
         assertThat(foundUser.getUsername()).isEqualTo(username);
         assertThat(foundUser.getNome()).isEqualTo("Test User");
 
-        // Assert direto na tabela
         Key key = Key.builder().partitionValue(user.getPk()).sortValue(user.getSk()).build();
         User userFromDb = userTable.getItem(key);
         assertThat(userFromDb).isNotNull();
@@ -91,28 +77,47 @@ class UserRepositoryTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("Deve encontrar usuário pelo ID (PK)")
+    @DisplayName("Deve encontrar usuario pelo ID (PK)")
     void findById_shouldReturnUser() {
-        // Arrange
-        String username = "testuser2";
+        String username = "testuser2-" + UUID.randomUUID();
         User user = createUser(username, "Test User 2");
         userRepository.save(user);
 
-        // Act
         Optional<User> foundUserOpt = userRepository.findById(user.getPk());
 
-        // Assert
         assertThat(foundUserOpt).isPresent();
         assertThat(foundUserOpt.get().getUsername()).isEqualTo(username);
     }
 
     @Test
-    @DisplayName("Deve retornar Optional vazio para username não existente")
+    @DisplayName("Deve retornar Optional vazio para username nao existente")
     void findByUsername_shouldReturnEmptyOptionalForNonExistingUser() {
-        // Act
-        Optional<User> foundUserOpt = userRepository.findByUsername("nonexistent");
+        Optional<User> foundUserOpt = userRepository.findByUsername("nonexistent-" + UUID.randomUUID());
 
-        // Assert
         assertThat(foundUserOpt).isNotPresent();
+    }
+
+    @Test
+    @DisplayName("Deve listar usuarios pendentes usando paginacao por status")
+    void findByStatusPaginated_shouldReturnPendingUsers() {
+        User firstUser = createUser("pending-1-" + UUID.randomUUID(), "Pending User 1");
+        firstUser.setStatus(User.UserStatus.PENDING_APPROVAL);
+        User secondUser = createUser("pending-2-" + UUID.randomUUID(), "Pending User 2");
+        secondUser.setStatus(User.UserStatus.PENDING_APPROVAL);
+
+        userRepository.save(firstUser);
+        userRepository.save(secondUser);
+
+        Page<User> firstPage = userRepository.findByStatusPaginated(User.UserStatus.PENDING_APPROVAL, 1, null);
+
+        assertThat(firstPage.items()).hasSize(1);
+        assertThat(firstPage.lastEvaluatedKey()).isNotEmpty();
+
+        Page<User> secondPage = userRepository.findByStatusPaginated(
+                User.UserStatus.PENDING_APPROVAL, 10, firstPage.lastEvaluatedKey());
+
+        assertThat(Stream.concat(firstPage.items().stream(), secondPage.items().stream()).toList())
+                .extracting(User::getUsername)
+                .contains(firstUser.getUsername(), secondUser.getUsername());
     }
 }

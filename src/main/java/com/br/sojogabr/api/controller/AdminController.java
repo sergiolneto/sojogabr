@@ -1,5 +1,6 @@
 package com.br.sojogabr.api.controller;
 
+import com.br.sojogabr.api.dto.PaginatedResponse;
 import com.br.sojogabr.api.dto.UserResponse;
 import com.br.sojogabr.application.port.in.UserUseCase;
 import lombok.RequiredArgsConstructor;
@@ -18,16 +19,22 @@ public class AdminController {
     private final UserUseCase userUseCase;
 
     /**
-     * Lista todos os usuários que estão aguardando aprovação.
-     * Acessível por ADMINs e POWER_USERs.
+     * Lista todos os usuários que estão aguardando aprovação (com paginação).
      */
     @GetMapping("/users/pending")
     @PreAuthorize("hasAnyRole('ADMIN', 'POWER_USER')")
-    public ResponseEntity<List<UserResponse>> listPendingUsers() {
-        List<UserResponse> pendingUsers = userUseCase.findPendingUsers().stream()
+    public ResponseEntity<PaginatedResponse<UserResponse>> listPendingUsers(
+            @RequestParam(defaultValue = "10") Integer limit,
+            @RequestParam(required = false) String lastKey) {
+        
+        PaginatedResponse<com.br.sojogabr.domain.model.User> pending = 
+                userUseCase.findPendingUsersPaginated(limit, lastKey);
+        
+        List<UserResponse> items = pending.items().stream()
                 .map(UserResponse::fromEntity)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(pendingUsers);
+                
+        return ResponseEntity.ok(new PaginatedResponse<>(items, pending.lastKey()));
     }
 
     /**

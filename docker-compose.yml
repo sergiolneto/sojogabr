@@ -23,6 +23,18 @@ services:
       timeout: 2s
       retries: 10
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - sojoga-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   backend:
     build:
       context: .
@@ -32,15 +44,24 @@ services:
     environment:
       # Sobrescreve as propriedades para conectar ao LocalStack dentro da rede do Docker
       - SPRING_CLOUD_AWS_DYNAMODB_ENDPOINT=http://localstack:4566
+      # Configurações do Redis
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
       # Define valores padrão para a região e credenciais, evitando a necessidade de um .env
+      - JAVA_TOOL_OPTIONS=-Daws.region=sa-east-1
       - SPRING_CLOUD_AWS_REGION_STATIC=sa-east-1
+      - AWS_REGION=sa-east-1
       - SPRING_CLOUD_AWS_CREDENTIALS_ACCESS-KEY=test
       - SPRING_CLOUD_AWS_CREDENTIALS_SECRET-KEY=test
+      # Credenciais padrão da AWS (necessárias para o cliente manual)
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
       # Garante que a aplicação Spring Boot inicie na mesma porta usada pelo healthcheck.
       - SERVER_PORT=${BACKEND_PORT:-8787}
     depends_on:
       localstack:
-        # Agora o backend espera o LocalStack estar completamente pronto (incluindo a tabela).
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - sojoga-net

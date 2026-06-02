@@ -36,7 +36,8 @@ resource "aws_dynamodb_table" "user_table" {
   global_secondary_index {
     name            = "status-index"
     hash_key        = "status"
-    projection_type = "ALL"
+    projection_type = "INCLUDE"
+    non_key_attributes = ["id", "username", "nome", "email", "esportes"]
   }
 
   tags = {
